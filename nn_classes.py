@@ -1,60 +1,12 @@
 from __future__ import print_function, division
-import pandas as pd
-import numpy as np
-import random
-from sklearn import preprocessing
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset
 
 try:
     xrange
 except NameError:
     xrange = range
-    
-
-class CollisionDataset(Dataset):
-    def __init__(self, datafile, filetype, header=None, scaler=None, target_col=0, index_col=None):
-        if filetype.lower() == "pandas":
-            dataframe = pd.read_csv(datafile, header=header, index_col=index_col)
-            X = pd.concat([dataframe.iloc[:, :target_col], dataframe.iloc[:, target_col+1:]], axis=1).as_matrix()
-            y = dataframe.iloc[:, target_col].as_matrix()
-        elif filetype.lower() == "numpy":
-            M = np.load(datafile)
-            X = np.concatenate([M[:, :target_col], M[:, target_col+1:]], axis=1)
-            y = M[:, target_col]
-            
-        self.scaler = preprocessing.StandardScaler().fit(X) if scaler is None else scaler
-        self._tX = th.from_numpy(self.scaler.transform(X)).float()
-        self._tY = th.from_numpy(y).long().view(-1, 1)
-            
-    
-    def __len__(self):
-        return len(self._tY)
-    
-    
-    def __getitem__(self, idx):
-        return {'input': self._tX[idx].contiguous().view(1, -1) if type(idx) is int else self._tX[idx, :],
-                'target': self._tY[idx]}
-    
-    
-    def subsample(self, size):
-        datasize = len(self)
-        if 0 < size <= 1:
-            cut = int(size*datasize)
-        elif size > 1:
-            cut = min((int(size), datasize))
-        else:
-            return None
-        subsample = random.sample(xrange(datasize), cut)
-        self._tX = self._tX[subsample]
-        self._tY = self._tY[subsample]
-        
-        
-    def saveas(self, filename, filetype):
-        if filetype.lower() == 'numpy':
-            np.save(filename, np.concatenate((self._tY.view(-1, 1).numpy(), self.scaler.inverse_transform(self._tX)), axis=1))
             
     
 class DHTTNet(nn.Module):
