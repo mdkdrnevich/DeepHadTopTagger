@@ -20,7 +20,7 @@ RAW_HEADER = list(itertools.chain.from_iterable(
        "DeepCSVprobudsg {}", "qgid {}"]]
      for i in range(1, 4)]))
 
-HEADER = ["Class"] + raw_header + ["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
+HEADER = ["Class"] + RAW_HEADER + ["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
                                    "j2 ptD", "j3 ptD", "(b, j2) mass", "(b, j3) mass"]
 
 
@@ -31,7 +31,8 @@ smallest = 0
 
 cut_signals = []
 for dfile in signal_files:
-    data = pd.read_csv(dfile, header=None, names=header)
+    print("Loading File: {}".format(dfile))
+    data = pd.read_csv(dfile, header=None, names=HEADER)
 
     # Make cuts at 96 & 266 GeV
     cut_data = data[((data["Top Mass"] > 96) & (data["Top Mass"] < 266))]
@@ -43,7 +44,8 @@ for dfile in signal_files:
     
 cut_bkgds = []
 for dfile in bkgd_files:
-    data = pd.read_csv(dfile, header=None, names=header)
+    print("Loading File: {}".format(dfile))
+    data = pd.read_csv(dfile, header=None, names=HEADER)
 
     # Make cuts at 96 & 266 GeV
     cut_data = data[((data["Top Mass"] > 96) & (data["Top Mass"] < 266))]
@@ -53,7 +55,8 @@ for dfile in bkgd_files:
     smallest = min([smallest, data_size]) if smallest > 0 else data_size
     cut_bkgds.append(cut_dset)
     
-    
+print("Finished loading files")
+
 for ix, dset in enumerate(cut_signals):
     dset.subsample(smallest)
     if ix == 0:
@@ -74,6 +77,8 @@ for ix, dset in enumerate(cut_bkgds):
 # - Training: 65%
 # - Validation: 15%
 # - Testing: 20%
+
+print("Saving datasets")
 
 total_signal.shuffle()
 total_bkgd.shuffle()
