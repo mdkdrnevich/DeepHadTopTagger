@@ -13,16 +13,21 @@ class CollisionDataset(Dataset):
         self._X = pd.concat([self.dataframe.iloc[:, :target_col], self.dataframe.iloc[:, target_col+1:]], axis=1)
         self._y = self.dataframe.iloc[:, target_col]
         self.scaler = preprocessing.StandardScaler().fit(self._X) if scaler is None else scaler
+        self._tX = th.from_numpy(self.scaler.transform(self._X.as_matrix()))
+        self._tY = th.from_numpy(self._y.as_matrix())
     
     def __len__(self):
         return len(self.dataframe)
     
     def __getitem__(self, idx):
         if type(idx) is int:
-            return {'input': th.from_numpy(self.scaler.transform(self._X.iloc[idx, :].as_matrix().reshape(1, -1)).flatten()),
-                    'target': self._y.iloc[idx]}
-        return {'input': th.from_numpy(self.scaler.transform(self._X.iloc[idx, :].as_matrix())),
-                'target': th.from_numpy(self._y.iloc[idx].as_matrix())}
+            return {'input': self._tX[idx, :].view(1, -1),
+                    'target': self._tY[idx]}
+            #return {'input': th.from_numpy(self.scaler.transform(self._X.iloc[idx, :].as_matrix().reshape(1, -1)).flatten()),
+            #        'target': self._y.iloc[idx]}
+        #return {'input': th.from_numpy(self.scaler.transform(self._X.iloc[idx, :].as_matrix())),
+        #        'target': th.from_numpy(self._y.iloc[idx].as_matrix())}
+        return {'input': self._tX[idx, :], 'target': self._tY[idx]}
     
 
 # Basic Forward Prop ReLu 
