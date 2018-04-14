@@ -67,10 +67,10 @@ class CollisionDataset(Dataset):
             return None
         subsample = random.sample(xrange(datasize), cut)
         if inplace:
-            self._tX = self._tX[subsample]
-            self._tY = self._tY[subsample]
+            self._tX = th.from_numpy(self._tX.numpy()[subsample])
+            self._tY = th.from_numpy(self._tY.numpy()[subsample])
         else:
-            return (self._tX[subsample], self._tY[subsample])
+            return (th.from_numpy(self._tX.numpy()[subsample]), th.from_numpy(self._tY.numpy()[subsample]))
         
      
     def shuffle(self, inplace=True):
@@ -78,10 +78,10 @@ class CollisionDataset(Dataset):
         indices = list(xrange(datasize))
         random.shuffle(indices)
         if inplace:
-            self._tX = self._tX[indices]
-            self._tY = self._tY[indices]
+            self._tX = th.from_numpy(self._tX.numpy()[indices])
+            self._tY = th.from_numpy(self._tY.numpy()[indices])
         else:
-            return (self._tX[indices], self._tY[indices])
+            return (th.from_numpy(self._tX.numpy()[indices]), th.from_numpy(self._tY.numpy()[indices]))
         
     
     def slice(self, start, end, dim=0):
