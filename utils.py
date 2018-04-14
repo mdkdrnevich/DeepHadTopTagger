@@ -51,6 +51,11 @@ class CollisionDataset(Dataset):
         return np.concatenate((self._tY.view(-1, 1).numpy(), self.scaler.inverse_transform(self._tX)), axis=1)
     
     
+    @property
+    def shape(self):
+        return self._tX.numpy().shape
+    
+    
     def subsample(self, size):
         datasize = len(self)
         if 0 < size <= 1:
@@ -64,7 +69,8 @@ class CollisionDataset(Dataset):
         self._tY = self._tY[subsample]
         
         
-    def saveas(self, filename, filetype):
+    def saveas(self, filename, filetype=None):
+        filetype = ospath.splitext(filename)[1][1:] if not filetype else filetype
         if filetype.lower() == 'numpy':
             np.save(filename, self._remerge())
 

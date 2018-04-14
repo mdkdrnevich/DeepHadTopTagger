@@ -11,7 +11,7 @@ except NameError:
     
 class DHTTNet(nn.Module):
     def __init__(self, input_dim):
-        super(DeepBinaryRegNet, self).__init__()
+        super(DHTTNet, self).__init__()
         # Layers
         #  - Linear
         #  - Activation
