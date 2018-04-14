@@ -21,11 +21,11 @@ class CollisionDataset(Dataset):
         else:
             filetype = ospath.splitext(data)[1][1:]
             if filetype.lower() == "csv":
-                dataframe = pd.read_csv(datafile, header=header, index_col=index_col)
+                dataframe = pd.read_csv(data, header=header, index_col=index_col)
                 X = pd.concat([dataframe.iloc[:, :target_col], dataframe.iloc[:, target_col+1:]], axis=1).as_matrix()
                 y = dataframe.iloc[:, target_col].as_matrix()
             elif filetype.lower() == "npy":
-                M = np.load(datafile)
+                M = np.load(data)
                 X = np.concatenate([M[:, :target_col], M[:, target_col+1:]], axis=1)
                 y = M[:, target_col]
             
