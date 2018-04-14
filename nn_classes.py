@@ -12,6 +12,7 @@ try:
     xrange
 except NameError:
     xrange = range
+    
 
 class CollisionDataset(Dataset):
     def __init__(self, datafile, filetype, header=None, scaler=None, target_col=0, index_col=None):
@@ -26,7 +27,7 @@ class CollisionDataset(Dataset):
             
         self.scaler = preprocessing.StandardScaler().fit(X) if scaler is None else scaler
         self._tX = th.from_numpy(self.scaler.transform(X)).float()
-        self._tY = th.from_numpy(y).type(th.ByteTensor)
+        self._tY = th.from_numpy(y).long().view(-1, 1)
             
     
     def __len__(self):
