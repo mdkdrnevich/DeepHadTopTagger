@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 import random
 from sklearn import preprocessing
 import os.path as ospath
+import itertools
 
 try:
     xrange
@@ -21,9 +22,9 @@ class CollisionDataset(Dataset):
         else:
             filetype = ospath.splitext(data)[1][1:]
             if filetype.lower() == "csv":
-                dataframe = pd.read_csv(data, header=header, index_col=index_col)
-                X = pd.concat([dataframe.iloc[:, :target_col], dataframe.iloc[:, target_col+1:]], axis=1).as_matrix()
-                y = dataframe.iloc[:, target_col].as_matrix()
+                self._dataframe = pd.read_csv(data, header=header, index_col=index_col)
+                X = pd.concat([self._dataframe.iloc[:, :target_col], self._dataframe.iloc[:, target_col+1:]], axis=1).as_matrix()
+                y = self._dataframe.iloc[:, target_col].as_matrix()
             elif filetype.lower() == "npy":
                 M = np.load(data)
                 X = np.concatenate([M[:, :target_col], M[:, target_col+1:]], axis=1)
@@ -56,7 +57,7 @@ class CollisionDataset(Dataset):
         return self._tX.numpy().shape
     
     
-    def subsample(self, size):
+    def subsample(self, size, inplace=True):
         datasize = len(self)
         if 0 < size <= 1:
             cut = int(size*datasize)
@@ -65,10 +66,32 @@ class CollisionDataset(Dataset):
         else:
             return None
         subsample = random.sample(xrange(datasize), cut)
-        self._tX = self._tX[subsample]
-        self._tY = self._tY[subsample]
+        if inplace:
+            self._tX = self._tX[subsample]
+            self._tY = self._tY[subsample]
+        else:
+            return (self._tX[subsample], self._tY[subsample])
         
+     
+    def shuffle(self, inplace=True):
+        datasize = len(self)
+        indices = list(xrange(datasize))
+        random.shuffle(indices)
+        if inplace:
+            self._tX = self._tX[indices]
+            self._tY = self._tY[indices]
+        else:
+            return (self._tX[indices], self._tY[indices])
         
+    
+    def slice(self, start, end, dim=0):
+        if dim == 0:
+            return CollisionDataset(self._remerge()[start:end], scaler=self.scaler)
+        elif dim == 1:
+            merged = self._remerge()
+            return CollisionDataset(np.concatenate((merged[:, 0].reshape(-1, 1), merged[:, start+1:end+1]), axis=1))
+    
+    
     def saveas(self, filename, filetype=None):
         filetype = ospath.splitext(filename)[1][1:] if not filetype else filetype
         if filetype.lower() == 'numpy':

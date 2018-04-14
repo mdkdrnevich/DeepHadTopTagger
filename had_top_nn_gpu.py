@@ -4,9 +4,6 @@
 # # Neural Network for Hadronic Top Reconstruction
 # This file creates a feed-forward binary classification neural network for hadronic top reconstruction by classifying quark jet triplets as being from a top quark or not.
 
-# In[54]:
-
-
 from __future__ import print_function, division
 import pandas as pd
 import numpy as np
@@ -17,52 +14,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-#import torchsample as tsamp
 from sklearn.metrics import f1_score, roc_auc_score
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 from nn_classes import *
-
-# In[96]:
-
-
-def find_cut(model, dataset, n_steps=100, benchmark="f1"):
-    X, y = Variable(dataset[:]['input']).float(), dataset[:]['target'].type(th.ByteTensor).view(-1, 1)
-    out = model(X).data
-    best_cut = 0
-    best_score = -1
-    for i in range(n_steps+1):
-        cut = i*((out.max() - out.min())/n_steps) + out.min()
-        if benchmark == "f1":
-            score = f1_score(y.numpy(), (out >= cut).type(th.ByteTensor).numpy())
-        elif benchmark == "acc":
-            score = ((out >= cut).type(th.ByteTensor) == y).sum()
-        if score > best_score:
-            best_score = score
-            best_cut = cut
-    return best_cut
-
-
-# In[89]:
-
-
-def score(model, dataset, cut=0.5):
-    X, y = Variable(dataset[:]['input']).float(), dataset[:]['target'].type(th.ByteTensor).view(-1, 1)
-    out = model(X).data
-    predicted = (out >= cut).type(th.ByteTensor)
-    return (predicted == y).sum()/out.size()[0]
-
+import utils
 
 # ## Load the Datasets
 # Here I load the datasets using my custom <code>Dataset</code> class. This ensures that the data is scaled properly and then the PyTorch <code>DataLoader</code> shuffles and iterates over the dataset in batches.
 
-# In[18]:
-
-
-trainset = CollisionDataset("../../scratch/ttH_hadT_cut_train.csv", header=0, target_col=0, index_col=0)
-valset = CollisionDataset("../../scratch/ttH_hadT_cut_val.csv", header=0, target_col=0, index_col=0, scaler=trainset.scaler)
-testset = CollisionDataset("../../scratch/ttH_hadT_cut_test.csv", header=0, target_col=0, index_col=0, scaler=trainset.scaler)
+trainset = utils.CollisionDataset("../../scratch/ttH_hadT_cut_train.csv", header=0, target_col=0, index_col=0)
+valset = utils.CollisionDataset("../../scratch/ttH_hadT_cut_val.csv", header=0, target_col=0, index_col=0, scaler=trainset.scaler)
+testset = utils.CollisionDataset("../../scratch/ttH_hadT_cut_test.csv", header=0, target_col=0, index_col=0, scaler=trainset.scaler)
 
 trainloader = DataLoader(trainset, batch_size=512, shuffle=True, num_workers=5)
 testloader = DataLoader(testset, batch_size=512, shuffle=True, num_workers=5)
