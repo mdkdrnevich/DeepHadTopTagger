@@ -39,8 +39,16 @@ class CollisionDataset(Dataset):
     
     
     def __getitem__(self, idx):
-        return {'input': self._tX[idx].contiguous().view(1, -1) if type(idx) is int else self._tX[idx, :],
-                'target': self._tY[idx]}
+        return (th.from_numpy(self._tX.numpy()[idx].reshape((1, -1))) if type(idx) is int else th.from_numpy(self._tX.numpy()[idx]),
+                th.from_numpy(self._tY.numpy()[idx[0]]) if type(idx) is tuple else th.from_numpy(self._tY.numpy()[idx]))
+    
+    
+    def __add__(left, right):
+        return CollisionDataset(np.concatenate((left._remerge(), right._remerge())))
+        
+        
+    def _remerge(self):
+        return np.concatenate((self._tY.view(-1, 1).numpy(), self.scaler.inverse_transform(self._tX)), axis=1)
     
     
     def subsample(self, size):
@@ -58,7 +66,7 @@ class CollisionDataset(Dataset):
         
     def saveas(self, filename, filetype):
         if filetype.lower() == 'numpy':
-            np.save(filename, np.concatenate((self._tY.view(-1, 1).numpy(), self.scaler.inverse_transform(self._tX)), axis=1))
+            np.save(filename, self._remerge())
 
 
 def score(model, dataset, cut=0.5):
