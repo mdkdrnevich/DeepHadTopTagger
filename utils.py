@@ -94,7 +94,7 @@ class CollisionDataset(Dataset):
     
     def saveas(self, filename, filetype=None):
         filetype = ospath.splitext(filename)[1][1:] if not filetype else filetype
-        if filetype.lower() == 'numpy':
+        if filetype.lower() == 'npy':
             np.save(filename, self._remerge())
 
 
