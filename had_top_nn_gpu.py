@@ -31,11 +31,13 @@ testset = utils.CollisionDataset("testing_basic_set.npy", scaler=trainset.scaler
 trainloader = DataLoader(trainset, batch_size=512, shuffle=True, num_workers=5)
 testloader = DataLoader(testset, batch_size=512, shuffle=True, num_workers=5)
 
-train_X = Variable(trainset[:]['input'])
-train_y = trainset[:]['target'].numpy()
+train_X, train_y = trainset[:]
+train_X = Variable(train_X)
+train_y = train_y.numpy()
 
-val_X = Variable(valset[:]['input'])
-val_y = valset[:]['target'].numpy()
+val_X, val_y = valset[:]
+val_X = Variable(val_X)
+val_y = val_y.numpy()
 
 # ## Initialize the NN, Loss Function, and Optimizer
 
@@ -63,7 +65,7 @@ print("Training DNN")
 for epoch in range(1, 9):
     if epoch%2 == 0: print(epoch)
     for batch in trainloader:
-        inputs, targets = Variable(batch['input'].cuda()).float(), Variable(batch['target'].cuda()).float().view(-1, 1)
+        inputs, targets = Variable(batch[0].cuda()).float(), Variable(batch[1].cuda()).float().view(-1, 1)
         optimizer.zero_grad()
         
         outputs = dnet(inputs)
