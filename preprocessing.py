@@ -55,7 +55,7 @@ for dfile in bkgd_files:
     smallest = min([smallest, data_size]) if smallest > 0 else data_size
     cut_bkgds.append(cut_dset)
     
-print("Finished loading files")
+print("Finished loading files. The smallest file after Top Mass cuts was {}".format(smallest))
 
 for ix, dset in enumerate(cut_signals):
     dset.subsample(smallest)
