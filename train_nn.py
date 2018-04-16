@@ -28,8 +28,10 @@ trainset = utils.CollisionDataset("training_basic_set.npy")
 valset = utils.CollisionDataset("validation_basic_set.npy", scaler=trainset.scaler)
 testset = utils.CollisionDataset("testing_basic_set.npy", scaler=trainset.scaler)
 
-trainloader = DataLoader(trainset, batch_size=512, shuffle=True, num_workers=5)
-testloader = DataLoader(testset, batch_size=512, shuffle=True, num_workers=5)
+batch_size = 512
+trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=5)
+testloader = DataLoader(testset, batch_size=batch_size, shuffle=True, num_workers=5)
+num_batches = len(trainloader)
 
 train_X, train_y = trainset[:]
 train_X = Variable(train_X)
@@ -63,9 +65,12 @@ val_curve = [(roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, v
 
 print("Training DNN")
 for epoch in range(1, 9):
-    if epoch%2 == 0: print(epoch)
+    count = 0
     for batch in trainloader:
+        count += 1
+        print("Epoch {}: {:.2f}%".format(epoch, round(count*100/num_batches, 2)), end='\r')
         inputs, targets = Variable(batch[0].cuda()).float(), Variable(batch[1].cuda()).float().view(-1, 1)
+        inputs.view(-1, input_dim)
         optimizer.zero_grad()
         
         outputs = dnet(inputs)
@@ -85,6 +90,7 @@ for epoch in range(1, 9):
     
     # Add the ROC AUC to the curve
     val_curve.append((roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant)))
+    print()
 print("Done")
 
 fig, ax = plt.subplots()
