@@ -8,9 +8,24 @@ import itertools
 import pickle
 from random import sample
 import utils
+import argparse
+import glob
 
-signal_files = ["ttH_hadT_signal.csv"]
-bkgd_files = ["ttH_hadT_bkgd.csv"]
+parser = argparse.ArgumentParser()
+parser.add_arguments("-b", "--background")
+parser.add_arguments("-s", "--signal")
+parser.add_arguments("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
+parser.parse_args()
+
+if parser.background:
+    bkgd_files = glob.glob(parser.background)
+else
+    bkgd_files = glob.glob("./data/background/*")
+    
+if parser.signal:
+    signal_files = glob.glob(parser.signal)
+else
+    signal_files = glob.glob("./data/signal/*")
 
 # First I make a header list to name the columns in the dataset. This header will be used for the background as well. Then Pandas is used to read in the data.
 
@@ -90,10 +105,10 @@ train = total_signal.slice(0, ix_train_cut) + total_bkgd.slice(0, ix_train_cut)
 val = total_signal.slice(ix_train_cut, ix_val_cut) + total_bkgd.slice(ix_train_cut, ix_val_cut)
 test = total_signal.slice(ix_val_cut, smallest) + total_bkgd.slice(ix_val_cut, smallest)
 
-train.saveas("training_set.npy")
-val.saveas("validation_set.npy")
-test.saveas("testing_set.npy")
+train.saveas(parser.name + "training_set.npy")
+val.saveas(parser.name + "validation_set.npy")
+test.saveas(parser.name + "testing_set.npy")
 
-train.slice(1, len(RAW_HEADER)+1, dim=1).saveas("training_basic_set.npy")
-val.slice(1, len(RAW_HEADER)+1, dim=1).saveas("validation_basic_set.npy")
-test.slice(1, len(RAW_HEADER)+1, dim=1).saveas("testing_basic_set.npy")
+train.slice(1, len(RAW_HEADER)+1, dim=1).saveas(parser.name + "training_basic_set.npy")
+val.slice(1, len(RAW_HEADER)+1, dim=1).saveas(parser.name + "validation_basic_set.npy")
+test.slice(1, len(RAW_HEADER)+1, dim=1).saveas(parser.name + "testing_basic_set.npy")
