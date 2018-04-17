@@ -15,15 +15,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--background")
 parser.add_argument("-s", "--signal")
 parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
-parser.parse_args()
+args = parser.parse_args()
 
-if parser.background:
-    bkgd_files = glob.glob(parser.background)
+if args.background:
+    bkgd_files = glob.glob(args.background)
 else:
     bkgd_files = glob.glob("./data/background/*")
     
-if parser.signal:
-    signal_files = glob.glob(parser.signal)
+if args.signal:
+    signal_files = glob.glob(args.signal)
 else:
     signal_files = glob.glob("./data/signal/*")
 
@@ -105,10 +105,10 @@ train = total_signal.slice(0, ix_train_cut) + total_bkgd.slice(0, ix_train_cut)
 val = total_signal.slice(ix_train_cut, ix_val_cut) + total_bkgd.slice(ix_train_cut, ix_val_cut)
 test = total_signal.slice(ix_val_cut, smallest) + total_bkgd.slice(ix_val_cut, smallest)
 
-train.saveas(parser.name + "training_set.npy")
-val.saveas(parser.name + "validation_set.npy")
-test.saveas(parser.name + "testing_set.npy")
+train.saveas(args.name + "training_set.npy")
+val.saveas(args.name + "validation_set.npy")
+test.saveas(args.name + "testing_set.npy")
 
-train.slice(1, len(RAW_HEADER)+1, dim=1).saveas(parser.name + "training_basic_set.npy")
-val.slice(1, len(RAW_HEADER)+1, dim=1).saveas(parser.name + "validation_basic_set.npy")
-test.slice(1, len(RAW_HEADER)+1, dim=1).saveas(parser.name + "testing_basic_set.npy")
+train.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "training_basic_set.npy")
+val.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "validation_basic_set.npy")
+test.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "testing_basic_set.npy")
