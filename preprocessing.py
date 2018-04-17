@@ -10,6 +10,7 @@ from random import sample
 import utils
 import argparse
 import glob
+import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--background")
@@ -18,12 +19,12 @@ parser.add_argument("-n", "--name", help="Name of the sample that you want added
 args = parser.parse_args()
 
 if args.background:
-    bkgd_files = glob.glob(args.background)
+    bkgd_files = glob.glob(args.background + os.sep + "*")
 else:
     bkgd_files = glob.glob("./data/background/*")
     
 if args.signal:
-    signal_files = glob.glob(args.signal)
+    signal_files = glob.glob(args.signal + os.sep + "*")
 else:
     signal_files = glob.glob("./data/signal/*")
 
