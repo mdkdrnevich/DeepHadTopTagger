@@ -21,6 +21,8 @@ import matplotlib.pyplot as plt
 from nn_classes import *
 import utils
 
+cuda = th.cuda.is_available()
+
 # ## Load the Datasets
 # Here I load the datasets using my custom <code>Dataset</code> class. This ensures that the data is scaled properly and then the PyTorch <code>DataLoader</code> shuffles and iterates over the dataset in batches.
 
@@ -47,7 +49,8 @@ input_dim = trainset.shape[1]
 
 # # Deep Neural Network on the Basic Features
 
-dnet = DHTTNet(input_dim).cuda()
+dnet = DHTTNet(input_dim)
+if cuda: dnet.cuda()
 
 criterion = nn.BCELoss()
 optimizer = optim.Adam(dnet.parameters())
@@ -59,8 +62,9 @@ dnet.eval()
 dnet.cpu()
 train_discriminant = dnet(train_X).data.numpy()
 val_discriminant = dnet(val_X).data.numpy()
-dnet.cuda()
+if cuda: dnet.cuda()
 dnet.train()
+
 val_curve = [(roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant))]
 
 print("Training DNN")
@@ -69,8 +73,11 @@ for epoch in range(1, 9):
     for batch in trainloader:
         count += 1
         print("Epoch {}: {:.2f}%".format(epoch, round(count*100/num_batches, 2)), end='\r')
-        inputs, targets = Variable(batch[0].cuda()).float(), Variable(batch[1].cuda()).float().view(-1, 1)
-        inputs.view(-1, input_dim)
+        inputs, targets = Variable(batch[0]).float(), Variable(batch[1]).float().view(-1, 1)
+        if cuda:
+            inputs = inputs.cuda()
+            targets = targets.cuda()
+        inputs = inputs.view(-1, input_dim)
         optimizer.zero_grad()
         
         outputs = dnet(inputs)
@@ -85,7 +92,7 @@ for epoch in range(1, 9):
 
     # Evaluate the model on a validation set
     val_discriminant = dnet(val_X).data.numpy()
-    dnet.cuda()
+    if cuda: dnet.cuda()
     dnet.train()
     
     # Add the ROC AUC to the curve
