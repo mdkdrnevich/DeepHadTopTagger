@@ -107,9 +107,10 @@ train = total_signal.slice(0, ix_train_cut) + total_bkgd.slice(0, ix_train_cut)
 val = total_signal.slice(ix_train_cut, ix_val_cut) + total_bkgd.slice(ix_train_cut, ix_val_cut)
 test = total_signal.slice(ix_val_cut, smallest) + total_bkgd.slice(ix_val_cut, smallest)
 
-train.saveas(args.name + "training_set.npy")
-val.saveas(args.name + "validation_set.npy")
-test.saveas(args.name + "testing_set.npy")
+if not args.exclude:
+    train.saveas(args.name + "training_set.npy")
+    val.saveas(args.name + "validation_set.npy")
+    test.saveas(args.name + "testing_set.npy")
 
 train.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "training_basic_set.npy")
 val.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "validation_basic_set.npy")
