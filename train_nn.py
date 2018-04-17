@@ -74,6 +74,7 @@ for epoch in range(1, 9):
         count += 1
         print("Epoch {}: {:.2f}%".format(epoch, round(count*100/num_batches, 2)), end='\r')
         inputs, targets = Variable(batch[0]).float(), Variable(batch[1]).float().view(-1, 1)
+        inputs = inputs.view(-1, input_dim) # To fix an error
         if cuda:
             inputs = inputs.cuda()
             targets = targets.cuda()
