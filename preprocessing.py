@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--background")
 parser.add_argument("-s", "--signal")
 parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
+parser.add_argument("-x", "--exclude", action="store_true", help="Exclude the engineered variables")
 args = parser.parse_args()
 
 if args.background:
