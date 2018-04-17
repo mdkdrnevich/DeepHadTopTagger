@@ -12,19 +12,19 @@ import argparse
 import glob
 
 parser = argparse.ArgumentParser()
-parser.add_arguments("-b", "--background")
-parser.add_arguments("-s", "--signal")
-parser.add_arguments("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
+parser.add_argument("-b", "--background")
+parser.add_argument("-s", "--signal")
+parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
 parser.parse_args()
 
 if parser.background:
     bkgd_files = glob.glob(parser.background)
-else
+else:
     bkgd_files = glob.glob("./data/background/*")
     
 if parser.signal:
     signal_files = glob.glob(parser.signal)
-else
+else:
     signal_files = glob.glob("./data/signal/*")
 
 # First I make a header list to name the columns in the dataset. This header will be used for the background as well. Then Pandas is used to read in the data.
