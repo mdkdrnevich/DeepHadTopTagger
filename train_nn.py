@@ -113,7 +113,7 @@ colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 train_patch = mpatches.Patch(color=colors[0], label='Training')
 val_patch = mpatches.Patch(color=colors[1], label='Validation')
 # Construct the legend
-plt.legend([train_patch, val_patch], loc='lower right')
+plt.legend(handles=[train_patch, val_patch], loc='lower right')
 fig.set_size_inches(18, 10)
 fig.savefig("nn_val_curve.png")
 
