@@ -18,6 +18,7 @@ from sklearn.metrics import f1_score, roc_auc_score
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from nn_classes import *
 import utils
 
@@ -106,11 +107,15 @@ plt.plot(range(len(val_curve)), val_curve)
 ax.set_ylabel("ROC AUC")
 ax.set_xlabel("Epochs Finished")
 ax.set_title("Validation Curves")
-handles, _ = ax.get_legend_handles_labels()
-labels = ["Training", "Validation"]
-plt.legend(handles, labels, loc='lower right')
+# Get the default colors
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+# Build legend entries
+train_patch = mpatches.Patch(color=colors[0], label='Training')
+val_patch = mpatches.Patch(color=colors[1], label='Validation')
+# Construct the legend
+plt.legend([train_patch, val_patch], loc='lower right')
 fig.set_size_inches(18, 10)
-fig.savefig("DNN_val_curves.png")
+fig.savefig("nn_val_curve.png")
 
 dnet.eval()
 dnet.cpu()
