@@ -4,7 +4,7 @@ import numpy as np
 import torch as th
 from torch.utils.data import Dataset
 import random
-from sklearn import preprocessing
+from sklearn import preprocessing as skl_preprocessing
 from sklearn.metrics import roc_curve, roc_auc_score, classification_report, confusion_matrix, f1_score, precision_score, recall_score
 import matplotlib as mpl
 mpl.use("Agg")
@@ -34,8 +34,17 @@ class CollisionDataset(Dataset):
                 X = np.concatenate([M[:, :target_col], M[:, target_col+1:]], axis=1)
                 y = M[:, target_col]
             
-        self.scaler = preprocessing.StandardScaler().fit(X) if scaler is None else scaler
-        self._tX = th.from_numpy(self.scaler.transform(X)).float()
+        if type(scaler) is skl_preprocessing.data.StandardScaler:
+            self.scaler = scaler
+            self._scale_type = 'scikit'
+        elif hasattr(scaler, '__iter__') and len(scaler) == 2:
+            self.scaler = scaler
+            self._scale_type = 'manual'
+        elif scaler is None:
+            self.scaler = skl_preprocessing.StandardScaler().fit(X)
+            self._scale_type = 'scikit'
+            
+        self._tX = th.from_numpy(self._transform(X)).float()
         self._tY = th.from_numpy(y).long().view(-1, 1)
             
     
@@ -50,10 +59,23 @@ class CollisionDataset(Dataset):
     
     def __add__(left, right):
         return CollisionDataset(np.concatenate((left._remerge(), right._remerge())))
+    
+    
+    def _transform(self, numpy_array, inverse=False):
+        if not inverse:
+            if self._scale_type == 'scikit':
+                return self.scaler.transform(numpy_array)
+            elif self._scale_type == 'manual':
+                return (numpy_array - self.scaler[0])/self.scaler[1]
+        else:
+            if self._scale_type == 'scikit':
+                return self.scaler.inverse_transform(numpy_array)
+            elif self._scale_type == 'manual':
+                return (numpy_array*self.scaler[1]) + self.scaler[0]
         
         
     def _remerge(self):
-        return np.concatenate((self._tY.view(-1, 1).numpy(), self.scaler.inverse_transform(self._tX.numpy())), axis=1)
+        return np.concatenate((self._tY.view(-1, 1).numpy(), self._transform(self._tX.numpy(), inverse=True)), axis=1)
     
     
     @property
@@ -104,7 +126,17 @@ class CollisionDataset(Dataset):
             
     def save_scaler(self, filename):
         if filename.endswith(".npz"):
-            np.savez_compressed(filename, mean=self.scaler.mean_, std=self.scaler.scale_)
+            if self._scale_type == 'scikit':
+                np.savez_compressed(filename, mean=self.scaler.mean_, std=self.scaler.scale_)
+            elif self._scale_type == 'manual':
+                np.savez_compressed(filename, mean=self.scaler[0], std=self.scaler[1])
+            
+            
+    def load_scaler(self, filename):
+        if filename.endswith(".npz"):
+            params = np.load(filename)
+            self._scale_type = 'manual'
+            self.scaler = (params["mean"], params["std"])
 
 
 def score(model, dataset, cut=0.5):
