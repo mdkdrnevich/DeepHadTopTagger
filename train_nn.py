@@ -119,4 +119,5 @@ fig.savefig("nn_val_curve.png")
 
 dnet.eval()
 dnet.cpu()
+trainset.save_scaler("data_standardizer.npz")
 th.save(dnet.state_dict(), "neural_net.pth")
