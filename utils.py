@@ -100,6 +100,11 @@ class CollisionDataset(Dataset):
         filetype = ospath.splitext(filename)[1][1:] if not filetype else filetype
         if filetype.lower() == 'npy':
             np.save(filename, self._remerge())
+            
+            
+    def save_scaler(self, filename):
+        if filename.endswith(".npz"):
+            np.savez_compressed(filename, mean=self.scaler.mean_, std=self.scaler.scale_)
 
 
 def score(model, dataset, cut=0.5):
