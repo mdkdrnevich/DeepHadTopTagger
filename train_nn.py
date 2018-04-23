@@ -21,17 +21,27 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from nn_classes import *
 import utils
+import argparse
+
+
+# Parse command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("training", help="File path to the training set")
+parser.add_argument("validation", help="File path to the validation set")
+parser.add_argument("-b", "--batch_size", help="Batch size", default=512)
+parser.add_argument("-e", "--epochs", help="Number of epochs", default=8)
+args = parser.parse_args()
+
 
 cuda = th.cuda.is_available()
 
 # ## Load the Datasets
 # Here I load the datasets using my custom <code>Dataset</code> class. This ensures that the data is scaled properly and then the PyTorch <code>DataLoader</code> shuffles and iterates over the dataset in batches.
 
-trainset = utils.CollisionDataset("training_basic_set.npy")
-valset = utils.CollisionDataset("validation_basic_set.npy", scaler=trainset.scaler)
-testset = utils.CollisionDataset("testing_basic_set.npy", scaler=trainset.scaler)
+trainset = utils.CollisionDataset(args.training)
+valset = utils.CollisionDataset(args.validation, scaler=trainset.scaler)
 
-batch_size = 512
+batch_size = args.batch_size
 trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=5)
 num_batches = len(trainloader)
 
@@ -68,7 +78,7 @@ dnet.train()
 val_curve = [(roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant))]
 
 print("Training DNN")
-for epoch in range(1, 9):
+for epoch in range(1, args.epochs+1):
     count = 0
     for batch in trainloader:
         count += 1
