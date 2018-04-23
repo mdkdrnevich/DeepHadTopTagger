@@ -33,7 +33,6 @@ testset = utils.CollisionDataset("testing_basic_set.npy", scaler=trainset.scaler
 
 batch_size = 512
 trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=5)
-testloader = DataLoader(testset, batch_size=batch_size, shuffle=True, num_workers=5)
 num_batches = len(trainloader)
 
 train_X, train_y = trainset[:]
@@ -102,6 +101,7 @@ for epoch in range(1, 9):
     print()
 print("Done")
 
+# Plot the training & validation curves for each epoch
 fig, ax = plt.subplots()
 plt.plot(range(len(val_curve)), val_curve)
 ax.set_ylabel("ROC AUC")
@@ -119,4 +119,4 @@ fig.savefig("nn_val_curve.png")
 
 dnet.eval()
 dnet.cpu()
-th.save(dnet.state_dict(), "neural_net.torch")
+th.save(dnet.state_dict(), "neural_net.pth")

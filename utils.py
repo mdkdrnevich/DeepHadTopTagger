@@ -5,6 +5,10 @@ import torch as th
 from torch.utils.data import Dataset
 import random
 from sklearn import preprocessing
+from sklearn.metrics import roc_curve, roc_auc_score, classification_report, confusion_matrix, f1_score, precision_score, recall_score
+import matplotlib as mpl
+mpl.use("Agg")
+import matplotlib.pyplot as plt
 import os.path as ospath
 import itertools
 
@@ -120,3 +124,29 @@ def find_cut(model, dataset, n_steps=100, benchmark="f1"):
             best_score = score
             best_cut = cut
     return best_cut
+
+
+def print_stats(discriminant, targets, n_steps=100):
+    best_cut = 0
+    best_score = -1
+    for i in range(n_steps+1):
+        cut = i*((discriminant.max() - discriminant.min())/n_steps) + discriminant.min()
+        score = f1_score(targets, (discriminant >= cut).astype(np.int32))
+        if score > best_score:
+            best_score = score
+            best_cut = cut
+    print(classification_report(targets, (discriminant >= best_cut).astype(np.int32)))
+    #print(confusion_matrix(targets, (discriminant >= best_cut).astype(np.int32)))
+    print("Area Under Curve: {}".format(roc_auc_score(targets, discriminant)))
+
+    
+def overlay_roc_curves(experiments, title=""):
+    fig, ax = plt.subplots()
+    for exp in experiments:
+        roc_points = roc_curve(exp['targets'], exp['discriminant'])
+        plt.plot(roc_points[0], roc_points[1], label=exp.get("label"))
+    ax.set_ylabel("True Positive Rate")
+    ax.set_xlabel("False Positive Rate")
+    ax.set_title("ROC Curves {}".format(title))
+    plt.legend(loc='lower right')
+    fig.set_size_inches(18, 10)
