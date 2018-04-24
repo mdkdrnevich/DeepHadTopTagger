@@ -28,8 +28,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("training", help="File path to the training set")
 parser.add_argument("validation", help="File path to the validation set")
-parser.add_argument("-b", "--batch_size", help="Batch size", default=512)
-parser.add_argument("-e", "--epochs", help="Number of epochs", default=8)
+parser.add_argument("-b", "--batch_size", help="Batch size", default=512, type=int)
+parser.add_argument("-e", "--epochs", help="Number of epochs", default=8, type=int)
 args = parser.parse_args()
 
 
