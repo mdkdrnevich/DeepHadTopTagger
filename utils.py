@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import torch as th
 from torch.utils.data import Dataset
+from torch.autograd import Variable
 import random
 from sklearn import preprocessing as skl_preprocessing
 from sklearn.metrics import roc_curve, roc_auc_score, classification_report, confusion_matrix, f1_score, precision_score, recall_score
@@ -127,7 +128,7 @@ class CollisionDataset(Dataset):
     def save_scaler(self, filename):
         if filename.endswith(".npz"):
             if self._scale_type == 'scikit':
-                np.savez_compressed(filename, mean=self.scaler.mean_, std=self.scaler.scale_)
+                np.savez_compressed(filename, mean=self.scaler.mean_.astype('float32'), std=self.scaler.scale_.astype('float32'))
             elif self._scale_type == 'manual':
                 np.savez_compressed(filename, mean=self.scaler[0], std=self.scaler[1])
             
@@ -135,19 +136,21 @@ class CollisionDataset(Dataset):
     def load_scaler(self, filename):
         if filename.endswith(".npz"):
             params = np.load(filename)
+            X = self._transform(self._tX.numpy(), inverse=True)
             self._scale_type = 'manual'
             self.scaler = (params["mean"], params["std"])
+            self._tX = th.from_numpy(self._transform(X))            
 
 
 def score(model, dataset, cut=0.5):
-    X, y = Variable(dataset[:]['input']).float(), dataset[:]['target'].type(th.ByteTensor).view(-1, 1)
+    X, y = Variable(dataset[:][0]).float(), dataset[:][1].type(th.ByteTensor).view(-1, 1)
     out = model(X).data
     predicted = (out >= cut).type(th.ByteTensor)
     return (predicted == y).sum()/out.size()[0]
 
 
 def find_cut(model, dataset, n_steps=100, benchmark="f1"):
-    X, y = Variable(dataset[:]['input']).float(), dataset[:]['target'].type(th.ByteTensor).view(-1, 1)
+    X, y = Variable(dataset[:][0]).float(), dataset[:][1].type(th.ByteTensor).view(-1, 1)
     out = model(X).data
     best_cut = 0
     best_score = -1
