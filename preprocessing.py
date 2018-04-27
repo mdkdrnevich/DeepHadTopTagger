@@ -14,8 +14,8 @@ import os
 import os.path as ospath
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-b", "--background")
-parser.add_argument("-s", "--signal")
+parser.add_argument("-b", "--background", help="Directory of background samples (will glob all files)")
+parser.add_argument("-s", "--signal", help="Directory of signal samples (will glob all files)")
 parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
 parser.add_argument("-x", "--exclude", action="store_true", help="Exclude the engineered variables")
 parser.add_argument("-t", "--test", action="store_true", help="Save testing sets separately as <file>_test.npy")
@@ -116,10 +116,10 @@ for ix, dset in enumerate(cut_bkgds):
         total_val_bkgd = dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
         total_test_bkgd = dset.slice(int(ix_val_cut * bkgd_scale), int(smallest * bkgd_scale))
     else:
-        total_train_bkgd = total_train_signal + dset.slice(0, int(ix_train_cut * bkgd_scale))
-        total_val_bkgd = total_val_signal + dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
-        total_test_bkgd = total_test_signal + dset.slice(int(ix_val_cut * bkgd_scale), int(smallest * bkgd_scale))
-
+        total_train_bkgd = total_train_bkgd + dset.slice(0, int(ix_train_cut * bkgd_scale))
+        total_val_bkgd = total_val_bkgd + dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
+        total_test_bkgd = total_test_bkgd + dset.slice(int(ix_val_cut * bkgd_scale), int(smallest * bkgd_scale))
+        
 print("Saving datasets")
 
 train = total_train_signal + total_train_bkgd

@@ -138,7 +138,7 @@ class CollisionDataset(Dataset):
             params = np.load(filename)
             X = self._transform(self._tX.numpy(), inverse=True)
             self._scale_type = 'manual'
-            self.scaler = (params["mean"], params["std"])
+            self.scaler = (params["mean"].astype("float32"), params["std"].astype("float32"))
             self._tX = th.from_numpy(self._transform(X))            
 
 
