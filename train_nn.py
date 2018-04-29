@@ -30,6 +30,7 @@ parser.add_argument("training", help="File path to the training set")
 parser.add_argument("validation", help="File path to the validation set")
 parser.add_argument("-b", "--batch_size", help="Batch size", default=512, type=int)
 parser.add_argument("-e", "--epochs", help="Number of epochs", default=8, type=int)
+parser.add_argument("-n", "--name", help="Name to help describe the output neural net and standardizer")
 args = parser.parse_args()
 
 
@@ -129,5 +130,9 @@ fig.savefig("nn_val_curve.png")
 
 dnet.eval()
 dnet.cpu()
-trainset.save_scaler("data_standardizer.npz")
-th.save(dnet.state_dict(), "neural_net.pth")
+if args.name:
+    trainset.save_scaler("{}_standardizer.npz".format(args.name))
+    th.save(dnet.state_dict(), "{}_net.pth".format(args.name))
+else:
+    trainset.save_scaler("data_standardizer.npz")
+    th.save(dnet.state_dict(), "neural_net.pth")
