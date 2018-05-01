@@ -126,13 +126,14 @@ val_patch = mpatches.Patch(color=colors[1], label='Validation')
 # Construct the legend
 plt.legend(handles=[train_patch, val_patch], loc='lower right')
 fig.set_size_inches(18, 10)
-fig.savefig("nn_val_curve.png")
 
 dnet.eval()
 dnet.cpu()
 if args.name:
+    fig.savefig("{}_val_curve.png".format(args.name))
     trainset.save_scaler("{}_standardizer.npz".format(args.name))
     th.save(dnet.state_dict(), "{}_net.pth".format(args.name))
 else:
+    fig.savefig("nn_val_curve.png")
     trainset.save_scaler("data_standardizer.npz")
     th.save(dnet.state_dict(), "neural_net.pth")

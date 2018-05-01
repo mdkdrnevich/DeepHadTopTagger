@@ -135,6 +135,6 @@ if not args.exclude:
     val.saveas(args.name + "validation_set.npy")
     test.saveas(args.name + "testing_set.npy")
 
-train.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "training_basic_set.npy")
-val.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "validation_basic_set.npy")
-test.slice(1, len(RAW_HEADER)+1, dim=1).saveas(args.name + "testing_basic_set.npy")
+train.slice(0, len(RAW_HEADER), dim=1).saveas(args.name + "training_basic_set.npy")
+val.slice(0, len(RAW_HEADER), dim=1).saveas(args.name + "validation_basic_set.npy")
+test.slice(0, len(RAW_HEADER), dim=1).saveas(args.name + "testing_basic_set.npy")

@@ -112,9 +112,9 @@ class CollisionDataset(Dataset):
         
     
     def slice(self, start, end, dim=0):
-        if dim == 0:
+        if dim == 0: # Maintains the scaler
             return CollisionDataset(self._remerge()[start:end], scaler=self.scaler)
-        elif dim == 1:
+        elif dim == 1: # Resets the scaler!
             merged = self._remerge()
             return CollisionDataset(np.concatenate((merged[:, 0].reshape(-1, 1), merged[:, start+1:end+1]), axis=1))
     
@@ -133,13 +133,20 @@ class CollisionDataset(Dataset):
                 np.savez_compressed(filename, mean=self.scaler[0], std=self.scaler[1])
             
             
-    def load_scaler(self, filename):
-        if filename.endswith(".npz"):
-            params = np.load(filename)
+    def load_scaler(self, scaler):
+        if type(scaler) is str and scaler.endswith(".npz"):
+            params = np.load(scaler)
             X = self._transform(self._tX.numpy(), inverse=True)
             self._scale_type = 'manual'
             self.scaler = (params["mean"].astype("float32"), params["std"].astype("float32"))
-            self._tX = th.from_numpy(self._transform(X))            
+            self._tX = th.from_numpy(self._transform(X))
+        elif hasattr(scaler, '__iter__') and len(scaler) == 2:
+            X = self._transform(self._tX.numpy(), inverse=True)
+            self.scaler = scaler
+            self._scale_type = 'manual'
+            self._tX = th.from_numpy(self._transform(X))
+        else:
+            raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
 
 
 def score(model, dataset, cut=0.5):
