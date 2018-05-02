@@ -70,3 +70,36 @@ class DHTTNet(nn.Module):
         x = self.norm9(self.f9(self.lin9(x)))
         x = F.sigmoid(self.lin10(x))
         return x
+    
+    
+class smaller_DHTTNet(DHTTNet):       
+    def forward(self, x):
+        x = self.norm1(self.f1(self.lin1(x)))
+        x = self.dropout(self.norm2(self.f2(self.lin2(x))))
+        x = self.norm3(self.f3(self.lin3(x)))
+        x = self.dropout(self.norm6(self.f6(self.lin6(x))))
+        x = self.norm7(self.f7(self.lin7(x)))
+        x = self.dropout(self.norm8(self.f8(self.lin8(x))))
+        x = self.norm9(self.f9(self.lin9(x)))
+        x = F.sigmoid(self.lin10(x))
+        return x
+    
+    
+class smallest_DHTTNet(DHTTNet):        
+    def forward(self, x):
+        x = self.norm1(self.f1(self.lin1(x)))
+        x = self.dropout(self.norm2(self.f2(self.lin2(x))))
+        x = self.norm7(self.f7(self.lin7(x)))
+        x = self.dropout(self.norm8(self.f8(self.lin8(x))))
+        x = self.norm9(self.f9(self.lin9(x)))
+        x = F.sigmoid(self.lin10(x))
+        return x
+    
+    
+class tiny_DHTTNet(DHTTNet):        
+    def forward(self, x):
+        x = self.norm1(self.f1(self.lin1(x)))
+        x = self.dropout(self.norm8(self.f8(self.lin8(x))))
+        x = self.norm9(self.f9(self.lin9(x)))
+        x = F.sigmoid(self.lin10(x))
+        return x
