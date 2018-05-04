@@ -200,13 +200,15 @@ def overlay_roc_curves(experiments, title=""):
     fig.set_size_inches(18, 10)
     
 
-def compute_loss(model, dataloader, loss):
+def compute_loss(model, dataloader, loss, cuda=False):
     for ix, (X, y) in enumerate(dataloader):
         X, y = Variable(X), Variable(y)
+        if cuda:
+            X = X.cuda()
         if ix == 0:
-            outputs = model(X)
+            outputs = model(X).cpu()
             targets = y
         else:
-            outputs = th.cat((outputs, model(X)))
+            outputs = th.cat((outputs, model(X).cpu()))
             targets = th.cat((targets, y))
     return loss(outputs, targets).view(1).data

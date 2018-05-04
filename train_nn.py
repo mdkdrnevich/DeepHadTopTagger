@@ -39,6 +39,8 @@ cuda = th.cuda.is_available()
 # ## Load the Datasets
 # Here I load the datasets using my custom <code>Dataset</code> class. This ensures that the data is scaled properly and then the PyTorch <code>DataLoader</code> shuffles and iterates over the dataset in batches.
 
+print("Loading Datasets")
+
 trainset = utils.CollisionDataset(args.training)
 valset = utils.CollisionDataset(args.validation, scaler=trainset.scaler)
 
@@ -47,15 +49,9 @@ trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_work
 validationloader = DataLoader(valset, batch_size=batch_size, shuffle=True, num_workers=5)
 num_batches = len(trainloader)
 
-train_X, train_y = trainset[:]
-train_X, train_y = Variable(train_X), Variable(train_y)
-#train_y = train_y.data.numpy()
-
-val_X, val_y = valset[:]
-val_X, val_y = Variable(val_X), Variable(val_y)
-#val_y = val_y.data.numpy()
-
 # ## Initialize the NN, Loss Function, and Optimizer
+
+print("Initializing Model")
 
 input_dim = trainset.shape[1]
 
@@ -70,16 +66,11 @@ optimizer = optim.Adam(dnet.parameters())
 #if th.cuda.device_count() > 1:
 #  dnet = nn.DataParallel(dnet)
 
+print("Calculating Initial Loss")
+
 dnet.eval()
-dnet.cpu()
-#train_discriminant = dnet(train_X).data.numpy()
-#val_discriminant = dnet(val_X).data.numpy()
-
-#val_curve = [(roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant))]
-val_curve = [(utils.compute_loss(dnet, trainloader, criterion).numpy().item(),
-              utils.compute_loss(dnet, validationloader, criterion).numpy().item())]
-
-if cuda: dnet.cuda()
+val_curve = [(utils.compute_loss(dnet, trainloader, criterion, cuda=cuda).numpy().item(),
+              utils.compute_loss(dnet, validationloader, criterion, cuda=cuda).numpy().item())]
 dnet.train()
 
 print("Training DNN")
@@ -99,24 +90,11 @@ for epoch in range(1, args.epochs+1):
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
-
-    dnet.cpu()
-    dnet.eval()
-    #Evaluate the model on the training set
-    #train_discriminant = dnet(train_X).data.numpy()
-    train_output = dnet(train_X)
-
-    # Evaluate the model on a validation set
-    #val_discriminant = dnet(val_X).data.numpy()
-    val_output = dnet(val_X)
     
-    # Add the ROC AUC to the curve
-    #val_curve.append((roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant)))
     # Add the points to the loss curve
-    val_curve.append((utils.compute_loss(dnet, trainloader, criterion).numpy().item(),
-                      utils.compute_loss(dnet, validationloader, criterion).numpy().item()))
-    
-    if cuda: dnet.cuda()
+    dnet.eval()
+    val_curve.append((utils.compute_loss(dnet, trainloader, criterion, cuda=cuda).numpy().item(),
+                      utils.compute_loss(dnet, validationloader, criterion, cuda=cuda).numpy().item()))
     dnet.train()
     print()
 print("Done")
