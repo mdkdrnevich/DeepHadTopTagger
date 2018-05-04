@@ -33,13 +33,13 @@ else:
 
 # First I make a header list to name the columns in the dataset. This header will be used for the background as well. Then Pandas is used to read in the data.
 
-RAW_HEADER = list(itertools.chain.from_iterable(
+RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
     [[n.format(i) for n in 
       ["Pt {}", "Eta {}", "Phi {}", "Mass {}", "Charge {}", "DeepCSVprobb {}", "DeepCSVprobbb {}", "DeepCSVprobc {}",
        "DeepCSVprobudsg {}", "qgid {}"]]
      for i in range(1, 4)]))
 
-HEADER = ["Class"] + RAW_HEADER + ["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
+HEADER = RAW_HEADER + ["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
                                    "j2 ptD", "j3 ptD", "(b, j2) mass", "(b, j3) mass"]
 
 

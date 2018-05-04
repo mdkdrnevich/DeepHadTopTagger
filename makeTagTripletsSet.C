@@ -40,9 +40,10 @@ struct less_than_key
 
 void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, vector<int> indices)
 {  
-  for (int i=0; i<3; i++) {
+  int size = indices.size();
+  for (int i=0; i<size; i++) {
     in_file << indices[i];
-    if (i<2)
+    if (i<(size - 1))
         in_file << ".";
     else
         in_file << ",";
@@ -67,7 +68,8 @@ void run_it(TChain* tree, TString output_file)
 
   //int num_hadronic = 0;
   int treeentries = tree->GetEntries();   
-  cout << "# events in tree: "<< treeentries << endl;  
+  cout << "# events in tree: "<< treeentries << endl;
+  int passed_selection = 0;
 
   double mcwgt_intree = -999.;
   double wallTimePerEvent_intree = -99.;  
@@ -94,7 +96,7 @@ void run_it(TChain* tree, TString output_file)
   tree->SetBranchAddress("preselected_jets", &preselected_jets_intree);
   tree->SetBranchAddress("pruned_genParticles", &gen_parts);
   
-  ofstream output_file;
+  ofstream outfile;
   outfile.open(output_file);
 
   Int_t cachesize = 500000000;   //500 MBytes
@@ -120,35 +122,49 @@ void run_it(TChain* tree, TString output_file)
       vector<int> matched_ix[2] = {vector<int>(), vector<int>()};
       vector<ttH::Jet> unmatched_jets;
       int ix = 0;
+      int num_pos_lept = 0;
+      int num_neg_lept = 0;
+      bool tau_lept = false;
       for (const auto &pjet : *preselected_jets_intree) {
-        if (pjet.genPdgID == 5 && pjet.genMotherPdgID == 6) {
+        int ID = pjet.genPdgID;
+        int mID = pjet.genMotherPdgID;
+        int gmID = pjet.genGrandMotherPdgID;
+        if (ID == 5 && mID == 6) {
           matched_jets[0].insert(matched_jets[0].begin(), pjet);
           matched_ix[0].push_back(ix);
-        } else if (pjet.genPdgID == -5 && pjet.genMotherPdgID == -6) {
+        } else if (ID == -5 && mID == -6) {
           matched_jets[1].insert(matched_jets[1].begin(), pjet);
           matched_ix[1].push_back(ix);
-        } else if (pjet.genMotherPdgID == 24 && pjet.genGrandMotherPdgID == 6) {
+        } else if (mID == 24 && gmID == 6) {
           matched_jets[0].push_back(pjet);
           matched_ix[0].push_back(ix);
-        } else if (pjet.genMotherPdgID == -24 && pjet.genGrandMotherPdgID == -6) {
+        } else if (mID == -24 && gmID == -6) {
           matched_jets[1].push_back(pjet);
           matched_ix[1].push_back(ix);
+        } else if (abs(ID) == 15) {
+          tau_lept = true;
+        } else if (ID >= 11 && ID <= 16 && (mID == 24 || gmID == 24)) {
+          num_pos_lept++;  
+        } else if (ID <= -11 && ID >= -16 && (mID == -24 || gmID == -24)) {
+          num_neg_lept++;
         } else {
           unmatched_jets.push_back(pjet);
         }
         ix++;
       }
       
-      // Make sure there's a hadronic top
-      if ((matched_jets[0].size() != 3) && (matched_jets[1].size() != 3))
+      // Make sure there's only one hadronic top
+      int size = preselected_jets_intree->size();
+      bool matched1 = (matched_jets[0].size() == 3);
+      bool matched2 = (matched_jets[1].size() == 3);
+      if (matched1 == matched2 || num_pos_lept < 2 || num_neg_lept < 2 || !tau_lept)
         continue;
+      
+      passed_selection++;
           
       // Generate all combinations of indices via 3 for loops
       // Every iteration make a vector to compare against matched vectors if there is a fully matched triplet
       // Write the triplet to file
-      int size = preselected_jets_intree->size();
-      bool matched1 = (matched_jets[0].size() == 3);
-      bool matched2 = (matched_jets[1].size() == 3);
       for (int i=0; i < size-2; i++) {
         for (int j=i+1; j < size-1; j++) {
           for (int k=j+1; k < size; k++) {
@@ -166,6 +182,7 @@ void run_it(TChain* tree, TString output_file)
   double endtime = get_wall_time();
   cout << "Elapsed time: " << endtime - starttime << " seconds, " << endl;
   if (treeentries>0) cout << "an average of " << (endtime - starttime) / treeentries << " per event." << endl;
+  cout << "Number that passed selection: " <<passed_selection<< endl;
   cout << "Num Sig: " <<num_signal<< endl;
   cout << "Num Bkgd: " <<num_bkgd<< endl;
   cout << "Avg Bkgd: " <<avg_bkgd<< endl;
