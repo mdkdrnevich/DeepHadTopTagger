@@ -74,12 +74,10 @@ dnet.eval()
 dnet.cpu()
 #train_discriminant = dnet(train_X).data.numpy()
 #val_discriminant = dnet(val_X).data.numpy()
-train_output = dnet(train_X)
-val_output = dnet(val_X)
 
 #val_curve = [(roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant))]
-val_curve = [(criterion(train_output, train_y).view(1).data.numpy().item(),
-              criterion(val_output, val_y).view(1).data.numpy().item())]
+val_curve = [(utils.compute_loss(dnet, trainloader, criterion).numpy().item(),
+              utils.compute_loss(dnet, validationloader, criterion).numpy().item())]
 
 if cuda: dnet.cuda()
 dnet.train()
@@ -115,8 +113,8 @@ for epoch in range(1, args.epochs+1):
     # Add the ROC AUC to the curve
     #val_curve.append((roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant)))
     # Add the points to the loss curve
-    val_curve.append((criterion(train_output, train_y).view(1).data.numpy().item(),
-                      criterion(val_output, val_y).view(1).data.numpy().item()))
+    val_curve.append((utils.compute_loss(dnet, trainloader, criterion).numpy().item(),
+                      utils.compute_loss(dnet, validationloader, criterion).numpy().item()))
     
     if cuda: dnet.cuda()
     dnet.train()

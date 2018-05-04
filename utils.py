@@ -46,7 +46,7 @@ class CollisionDataset(Dataset):
             self._scale_type = 'scikit'
             
         self._tX = th.from_numpy(self._transform(X)).float()
-        self._tY = th.from_numpy(y).float().view(-1, 1)
+        self._tY = th.from_numpy(y.reshape(-1, 1)).float()
             
     
     def __len__(self):
@@ -200,6 +200,13 @@ def overlay_roc_curves(experiments, title=""):
     fig.set_size_inches(18, 10)
     
 
-def compute_loss(model, dataloader, criterion):
-    for batch in dataloader:
-        X, y = Variable(batch[0]).float(), Variable(batch[1]).float().view(-1, 1)
+def compute_loss(model, dataloader, loss):
+    for ix, (X, y) in enumerate(dataloader):
+        X, y = Variable(X), Variable(y)
+        if ix == 0:
+            outputs = model(X)
+            targets = y
+        else:
+            outputs = th.cat((outputs, model(X)))
+            targets = th.cat((targets, y))
+    return loss(outputs, targets).view(1).data
