@@ -69,8 +69,8 @@ optimizer = optim.Adam(dnet.parameters())
 print("Calculating Initial Loss")
 
 dnet.eval()
-val_curve = [(utils.compute_loss(dnet, trainloader, criterion, cuda=cuda).numpy().item(),
-              utils.compute_loss(dnet, validationloader, criterion, cuda=cuda).numpy().item())]
+val_curve = [(utils.compute_loss(dnet, trainloader, criterion, cuda=cuda),
+              utils.compute_loss(dnet, validationloader, criterion, cuda=cuda))]
 dnet.train()
 
 print("Training DNN")
@@ -93,8 +93,8 @@ for epoch in range(1, args.epochs+1):
     
     # Add the points to the loss curve
     dnet.eval()
-    val_curve.append((utils.compute_loss(dnet, trainloader, criterion, cuda=cuda).numpy().item(),
-                      utils.compute_loss(dnet, validationloader, criterion, cuda=cuda).numpy().item()))
+    val_curve.append((utils.compute_loss(dnet, trainloader, criterion, cuda=cuda),
+                      utils.compute_loss(dnet, validationloader, criterion, cuda=cuda)))
     dnet.train()
     print()
 print("Done")

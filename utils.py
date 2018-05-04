@@ -202,10 +202,15 @@ def overlay_roc_curves(experiments, title=""):
 
 def compute_loss(model, dataloader, loss, cuda=False):
     running_loss = 0
+    switch = True
     for X, y in dataloader:
         X, y = Variable(X), Variable(y)
         if cuda:
             X = X.cuda()
             y = y.cuda()
-        running_loss += loss(model(X), targets).view(1).data.numpy().item()
+        if switch:
+            running_loss = loss(model(X), y).view(1).data.cpu().numpy().item()
+            switch = False
+        else:
+            running_loss = (running_loss + loss(model(X), y).view(1).data.cpu().numpy().item())/2
     return running_loss
