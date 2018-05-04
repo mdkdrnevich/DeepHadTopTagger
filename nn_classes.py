@@ -103,3 +103,4 @@ class tiny_DHTTNet(DHTTNet):
         x = self.norm9(self.f9(self.lin9(x)))
         x = F.sigmoid(self.lin10(x))
         return x
+        
