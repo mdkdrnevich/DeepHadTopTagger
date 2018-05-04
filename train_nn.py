@@ -49,10 +49,12 @@ num_batches = len(trainloader)
 train_X, train_y = trainset[:]
 train_X = Variable(train_X)
 #train_y = train_y.numpy()
+train_y = Variable(train_y).float().view(-1, 1)
 
 val_X, val_y = valset[:]
 val_X = Variable(val_X)
 #val_y = val_y.numpy()
+val_y = Variable(val_y).float().view(-1, 1)
 
 # ## Initialize the NN, Loss Function, and Optimizer
 
@@ -77,8 +79,8 @@ train_output = dnet(train_X)
 val_output = dnet(val_X)
 
 #val_curve = [(roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant))]
-val_curve.append((criterion(train_output, train_y).view(1).numpy().item(),
-                      criterion(val_output, val_y).view(1).numpy().item()))
+val_curve = [(criterion(train_output, train_y).view(1).data.numpy().item(),
+              criterion(val_output, val_y).view(1).data.numpy().item())]
 
 if cuda: dnet.cuda()
 dnet.train()
@@ -115,8 +117,8 @@ for epoch in range(1, args.epochs+1):
     # Add the ROC AUC to the curve
     #val_curve.append((roc_auc_score(train_y, train_discriminant), roc_auc_score(val_y, val_discriminant)))
     # Add the points to the loss curve
-    val_curve.append((criterion(train_output, train_y).view(1).numpy().item(),
-                      criterion(val_output, val_y).view(1).numpy().item()))
+    val_curve.append((criterion(train_output, train_y).view(1).data.numpy().item(),
+                      criterion(val_output, val_y).view(1).data.numpy().item()))
     
     if cuda: dnet.cuda()
     dnet.train()
