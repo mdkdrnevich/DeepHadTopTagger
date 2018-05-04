@@ -104,3 +104,25 @@ class tiny_DHTTNet(DHTTNet):
         x = F.sigmoid(self.lin10(x))
         return x
         
+        
+class TinyNet(nn.Module):
+    def __init__(self, input_dim):
+        super(DHTTNet, self).__init__()
+        # Layers
+        #  - Linear
+        #  - Activation
+        #  - Batch Normalization
+        #  - Dropout
+        self.lin9 = nn.Linear(input_dim, input_dim//2)
+        self.f9 = nn.PReLU(input_dim//2)
+        self.norm9 = nn.BatchNorm1d(input_dim//2)
+        #
+        self.lin10 = nn.Linear(input_dim//2, 1)
+        # Dropout Layer
+        self.dropout = nn.Dropout(0.2)
+        
+        
+    def forward(self, x):
+        x = self.norm9(self.f9(self.lin9(x)))
+        x = F.sigmoid(self.lin10(x))
+        return x
