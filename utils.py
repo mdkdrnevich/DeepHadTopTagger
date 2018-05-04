@@ -46,7 +46,7 @@ class CollisionDataset(Dataset):
             self._scale_type = 'scikit'
             
         self._tX = th.from_numpy(self._transform(X)).float()
-        self._tY = th.from_numpy(y).long().view(-1, 1)
+        self._tY = th.from_numpy(y).float().view(-1, 1)
             
     
     def __len__(self):
@@ -54,8 +54,9 @@ class CollisionDataset(Dataset):
     
     
     def __getitem__(self, idx):
-        return (th.from_numpy(self._tX.numpy()[idx].reshape((1, -1))) if type(idx) is int else th.from_numpy(self._tX.numpy()[idx]),
-                th.from_numpy(self._tY.numpy()[idx[0]]) if type(idx) is tuple else th.from_numpy(self._tY.numpy()[idx]))
+        X = th.from_numpy(self._tX.numpy()[idx])
+        y = th.from_numpy(self._tY.numpy()[idx[0]]) if type(idx) is tuple else th.from_numpy(self._tY.numpy()[idx])
+        return (X, y)
     
     
     def __add__(left, right):
@@ -197,3 +198,8 @@ def overlay_roc_curves(experiments, title=""):
     ax.set_title("ROC Curves {}".format(title))
     plt.legend(loc='lower right')
     fig.set_size_inches(18, 10)
+    
+
+def compute_loss(model, dataloader, criterion):
+    for batch in dataloader:
+        X, y = Variable(batch[0]).float(), Variable(batch[1]).float().view(-1, 1)

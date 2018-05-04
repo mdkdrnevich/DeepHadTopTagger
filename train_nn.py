@@ -44,17 +44,16 @@ valset = utils.CollisionDataset(args.validation, scaler=trainset.scaler)
 
 batch_size = args.batch_size
 trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=5)
+validationloader = DataLoader(valset, batch_size=batch_size, shuffle=True, num_workers=5)
 num_batches = len(trainloader)
 
 train_X, train_y = trainset[:]
-train_X = Variable(train_X)
-#train_y = train_y.numpy()
-train_y = Variable(train_y).float().view(-1, 1)
+train_X, train_y = Variable(train_X), Variable(train_y)
+#train_y = train_y.data.numpy()
 
 val_X, val_y = valset[:]
-val_X = Variable(val_X)
-#val_y = val_y.numpy()
-val_y = Variable(val_y).float().view(-1, 1)
+val_X, val_y = Variable(val_X), Variable(val_y)
+#val_y = val_y.data.numpy()
 
 # ## Initialize the NN, Loss Function, and Optimizer
 
@@ -88,15 +87,14 @@ dnet.train()
 print("Training DNN")
 for epoch in range(1, args.epochs+1):
     count = 0
-    for batch in trainloader:
+    for inputs, targets in trainloader:
         count += 1
         print("Epoch {}: {:.2f}%".format(epoch, round(count*100/num_batches, 2)), end='\r')
-        inputs, targets = Variable(batch[0]).float(), Variable(batch[1]).float().view(-1, 1)
-        inputs = inputs.view(-1, input_dim) # To fix an error
+        
+        inputs, targets = Variable(inputs), Variable(targets)
         if cuda:
             inputs = inputs.cuda()
             targets = targets.cuda()
-        inputs = inputs.view(-1, input_dim)
         optimizer.zero_grad()
         
         outputs = dnet(inputs)
@@ -128,7 +126,7 @@ print("Done")
 # Plot the training & validation curves for each epoch
 fig, ax = plt.subplots()
 plt.plot(range(len(val_curve)), val_curve)
-ax.set_ylabel("ROC AUC")
+ax.set_ylabel("BCE Loss")
 ax.set_xlabel("Epochs Finished")
 ax.set_title("Validation Curves")
 # Get the default colors
