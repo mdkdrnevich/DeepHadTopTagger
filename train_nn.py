@@ -13,6 +13,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import f1_score, roc_auc_score
 import matplotlib as mpl
@@ -28,9 +29,10 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("training", help="File path to the training set")
 parser.add_argument("validation", help="File path to the validation set")
-parser.add_argument("-b", "--batch_size", help="Batch size", default=2048, type=int)
+parser.add_argument("-b", "--batch-size", help="Batch size", default=2048, type=int)
 parser.add_argument("-e", "--epochs", help="Number of epochs", default=10, type=int)
 parser.add_argument("-n", "--name", help="Name to help describe the output neural net and standardizer")
+parser.add_argument("-l", "--learning-rate", help="What the initial learning rate should be", default=1e3, type=float)
 args = parser.parse_args()
 
 
@@ -61,7 +63,8 @@ dnet = DHTTNet(input_dim)
 if cuda: dnet.cuda()
 
 criterion = nn.BCELoss()
-optimizer = optim.Adam(dnet.parameters())
+optimizer = optim.Adam(dnet.parameters(), lr=args.learning_rate)
+scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 
 #if th.cuda.device_count() > 1:
 #  dnet = nn.DataParallel(dnet)
@@ -93,9 +96,11 @@ for epoch in range(1, args.epochs+1):
     
     # Add the points to the loss curve
     dnet.eval()
-    val_curve.append((utils.compute_loss(dnet, trainloader, criterion, cuda=cuda),
-                      utils.compute_loss(dnet, validationloader, criterion, cuda=cuda)))
+    train_loss = utils.compute_loss(dnet, trainloader, criterion, cuda=cuda)
+    val_loss = utils.compute_loss(dnet, validationloader, criterion, cuda=cuda, variable=True)
+    val_curve.append((train_loss, val_loss.data.cpu().numpy().item()))
     dnet.train()
+    scheduler.step(val_loss)
     print()
 print("Done")
 

@@ -107,7 +107,7 @@ class tiny_DHTTNet(DHTTNet):
         
 class TinyNet(nn.Module):
     def __init__(self, input_dim):
-        super(DHTTNet, self).__init__()
+        super(TinyNet, self).__init__()
         # Layers
         #  - Linear
         #  - Activation
