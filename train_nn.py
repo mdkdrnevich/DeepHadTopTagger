@@ -33,6 +33,7 @@ parser.add_argument("-b", "--batch-size", help="Batch size", default=2048, type=
 parser.add_argument("-e", "--epochs", help="Number of epochs", default=10, type=int)
 parser.add_argument("-n", "--name", help="Name to help describe the output neural net and standardizer")
 parser.add_argument("-l", "--learning-rate", help="What the initial learning rate should be", default=1e3, type=float)
+parser.add_argument("-w", "--width", help="Width of the hidden layers in the DNN", default=15, type=int)
 args = parser.parse_args()
 
 
@@ -59,7 +60,7 @@ input_dim = trainset.shape[1]
 
 # # Deep Neural Network on the Basic Features
 
-dnet = DHTTNet(input_dim)
+dnet = DHTTNet(input_dim, args.width)
 if cuda: dnet.cuda()
 
 criterion = nn.BCELoss()

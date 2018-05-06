@@ -10,14 +10,13 @@ except NameError:
             
     
 class DHTTNet(nn.Module):
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, width):
         super(DHTTNet, self).__init__()
         # Layers
         #  - Linear
         #  - Activation
         #  - Batch Normalization
         #  - Dropout
-        width = 30
         self.lin1 = nn.Linear(input_dim, input_dim*width)
         self.f1 = nn.PReLU(input_dim*width)
         self.norm1 = nn.BatchNorm1d(input_dim*width)
