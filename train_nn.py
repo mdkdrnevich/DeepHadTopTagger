@@ -64,6 +64,7 @@ if cuda: dnet.cuda()
 
 criterion = nn.BCELoss()
 optimizer = optim.Adam(dnet.parameters(), lr=args.learning_rate)
+#optimizer = optim.SGD(dnet.parameters(), lr=5e-4, momentum=0.9, nesterov=True)
 scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 
 #if th.cuda.device_count() > 1:
@@ -97,8 +98,8 @@ for epoch in range(1, args.epochs+1):
     # Add the points to the loss curve
     dnet.eval()
     train_loss = utils.compute_loss(dnet, trainloader, criterion, cuda=cuda)
-    val_loss = utils.compute_loss(dnet, validationloader, criterion, cuda=cuda, variable=True)
-    val_curve.append((train_loss, val_loss.data.cpu().numpy().item()))
+    val_loss = utils.compute_loss(dnet, validationloader, criterion, cuda=cuda)
+    val_curve.append((train_loss, val_loss))
     dnet.train()
     scheduler.step(val_loss)
     print()
