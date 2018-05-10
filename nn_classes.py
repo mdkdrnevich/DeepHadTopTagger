@@ -18,31 +18,31 @@ class DHTTNet(nn.Module):
         #  - Batch Normalization
         #  - Dropout
         self.lin1 = nn.Linear(input_dim, input_dim*width)
-        self.f1 = nn.PReLU(input_dim*width)
+        self.f1 = nn.PReLU()
         self.norm1 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin2 = nn.Linear(input_dim*width, input_dim*width)
-        self.f2 = nn.PReLU(input_dim*width)
+        self.f2 = nn.PReLU()
         self.norm2 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin3 = nn.Linear(input_dim*width, input_dim*width)
-        self.f3 = nn.PReLU(input_dim*width)
+        self.f3 = nn.PReLU()
         self.norm3 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin4 = nn.Linear(input_dim*width, input_dim*width)
-        self.f4 = nn.PReLU(input_dim*width)
+        self.f4 = nn.PReLU()
         self.norm4 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin5 = nn.Linear(input_dim*width, input_dim*width)
-        self.f5 = nn.PReLU(input_dim*width)
+        self.f5 = nn.PReLU()
         self.norm5 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin6 = nn.Linear(input_dim*width, input_dim*width)
-        self.f6 = nn.PReLU(input_dim*width)
+        self.f6 = nn.PReLU()
         self.norm6 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin7 = nn.Linear(input_dim*width, input_dim*width)
-        self.f7 = nn.PReLU(input_dim*width)
+        self.f7 = nn.PReLU()
         self.norm7 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin10 = nn.Linear(input_dim*width, 1)
@@ -127,19 +127,19 @@ class SDAENet(nn.Module):
         #  - Batch Normalization
         #  - Dropout
         self.lin1 = nn.Linear(input_dim, input_dim*width)
-        self.f1 = nn.PReLU(input_dim*width)
+        self.f1 = nn.PReLU()
         self.norm1 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin2 = nn.Linear(input_dim*width, input_dim*width)
-        self.f2 = nn.PReLU(input_dim*width)
+        self.f2 = nn.PReLU()
         self.norm2 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin3 = nn.Linear(input_dim*width, input_dim*width)
-        self.f3 = nn.PReLU(input_dim*width)
+        self.f3 = nn.PReLU()
         self.norm3 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin4 = nn.Linear(input_dim*width, input_dim*width)
-        self.f4 = nn.PReLU(input_dim*width)
+        self.f4 = nn.PReLU()
         self.norm4 = nn.BatchNorm1d(input_dim*width)
         #
         self.lin10 = nn.Linear(input_dim*width, input_dim)
@@ -206,9 +206,9 @@ class ConvDHTTNet(nn.Module):
         # Apply the Convolutional layers to the Pt, Eta, Phi, Mass, Charge values
         batch_size = len(x)
         num_vars = self.input_dim//3
-        jet1 = x[:, :5].view(batch_size, 1, 5)
-        jet2 = x[:, num_vars:num_vars+5].view(batch_size, 1, 5)
-        jet3 = x[:, num_vars*2:num_vars*2 + 5].view(batch_size, 1, 5)
+        jet1 = x[:, :5].contiguous().view(batch_size, 1, 1, 5)
+        jet2 = x[:, num_vars:num_vars+5].contiguous().view(batch_size, 1, 1, 5)
+        jet3 = x[:, num_vars*2:num_vars*2 + 5].contiguous().view(batch_size, 1, 1, 5)
         
         convx = th.cat((jet1, jet2, jet3), dim=1)
         feature1 = self.convnorm1(self.convf1(self.conv1(convx))).view(batch_size, -1)
