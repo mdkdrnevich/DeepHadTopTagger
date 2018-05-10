@@ -148,6 +148,42 @@ class CollisionDataset(Dataset):
             self._tX = th.from_numpy(self._transform(X))
         else:
             raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
+            
+
+class AutoencoderDataset(CollisionDataset):
+    def __init__(self, data, header=None, scaler=None, target_col=None, index_col=None):
+        if type(data) is np.ndarray:
+            if target_col is not None:
+                X = np.concatenate([data[:, :target_col], data[:, target_col+1:]], axis=1)
+            else:
+                X = data
+        else:
+            filetype = ospath.splitext(data)[1][1:]
+            if filetype.lower() == "csv":
+                self._dataframe = pd.read_csv(data, header=header, index_col=index_col)
+                if target_col is not None:
+                    X = pd.concat([self._dataframe.iloc[:, :target_col], self._dataframe.iloc[:, target_col+1:]], axis=1).as_matrix()
+                else:
+                    X = self._dataframe.as_matrix()
+            elif filetype.lower() == "npy":
+                M = np.load(data)
+                if target_col is not None:
+                    X = np.concatenate([M[:, :target_col], M[:, target_col+1:]], axis=1)
+                else:
+                    X = M
+            
+        if type(scaler) is skl_preprocessing.data.StandardScaler:
+            self.scaler = scaler
+            self._scale_type = 'scikit'
+        elif hasattr(scaler, '__iter__') and len(scaler) == 2:
+            self.scaler = scaler
+            self._scale_type = 'manual'
+        elif scaler is None:
+            self.scaler = skl_preprocessing.StandardScaler().fit(X)
+            self._scale_type = 'scikit'
+            
+        self._tX = th.from_numpy(self._transform(X)).float()
+        self._tY = self._tX
 
 
 def score(model, dataset, cut=0.5):

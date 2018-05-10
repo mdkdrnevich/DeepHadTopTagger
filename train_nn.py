@@ -60,7 +60,7 @@ input_dim = trainset.shape[1]
 
 # # Deep Neural Network on the Basic Features
 
-dnet = DHTTNet(input_dim, args.width)
+dnet = ConvDHTTNet(input_dim, args.width)
 if cuda: dnet.cuda()
 
 criterion = nn.BCELoss()
