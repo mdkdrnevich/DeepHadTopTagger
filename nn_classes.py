@@ -2,6 +2,8 @@ from __future__ import print_function, division
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
+import numpy.random as rand
 
 try:
     xrange
@@ -141,6 +143,9 @@ class SDAENet(nn.Module):
         
 
     def forward(self, x):
+        batch_size = len(x)
+        choice = th.from_numpy(rand.choice(np.arange(batch_size), int(batch_size*0.3), replace=False))
+        x.index_fill_(1, choice, 0)
         for i in range(self.num_layers):
             x = self.norm_layers[i](self.activation_layers[i](self.linear_layers[i](x)))
             if i%2 == 1:
