@@ -77,13 +77,13 @@ scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 
 print("Calculating Initial Loss for the Autoencoder")
 
-val_curveAE = [utils.test(anet, criterion, trainloader, validationloader, cuda=cuda)]
+val_curveAE = [utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda)]
 
 print("Training the SDAE")
 
 current_num_layers = 1
 for epoch in range(1, args.epochs+1):
-    utils.train(anet, criterion, optimizer, trainloaderAE)
+    utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda)
     losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, scheduler=scheduler)
     val_curveAE.append(losses)
 
@@ -121,7 +121,7 @@ val_curve = [utils.test(anet, criterion, trainloader, validationloader, cuda=cud
 
 print("Fine Tuning the NN")
 for epoch in range(1, args.epochs+1):
-    utils.train(dnet, criterion, optimizer, trainloader)
+    utils.train(dnet, criterion, optimizer, trainloader, cuda=cuda)
     losses = utils.test(dnet, criterion, trainloader, validationloader, cuda=cuda, scheduler=scheduler)
     val_curve.append(losses)
 print("Done")

@@ -238,7 +238,7 @@ class AutoencoderDataset(Dataset):
             raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
             
             
-def train(model, criterion, optimizer, trainloader):
+def train(model, criterion, optimizer, trainloader, cuda=False):
     for inputs, targets in trainloader:
         inputs, targets = Variable(inputs), Variable(targets)
         if cuda:
@@ -260,6 +260,7 @@ def test(model, criterion, trainloader, validationloader, cuda=False, scheduler=
     if scheduler is not None:
         scheduler.step(val_loss)
     return (train_loss, val_loss)
+
 
 def score(model, dataset, cut=0.5):
     X, y = Variable(dataset[:][0]).float(), dataset[:][1].type(th.ByteTensor).view(-1, 1)
