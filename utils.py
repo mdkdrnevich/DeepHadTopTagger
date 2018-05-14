@@ -254,8 +254,8 @@ def train(model, criterion, optimizer, trainloader):
         
 def test(model, criterion, trainloader, validationloader, cuda=False, scheduler=None):
     model.eval()
-    train_loss = utils.compute_loss(model, trainloader, criterion, cuda=cuda)
-    val_loss = utils.compute_loss(model, validationloader, criterion, cuda=cuda)
+    train_loss = compute_loss(model, trainloader, criterion, cuda=cuda)
+    val_loss = compute_loss(model, validationloader, criterion, cuda=cuda)
     model.train()
     if scheduler is not None:
         scheduler.step(val_loss)
