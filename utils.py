@@ -150,7 +150,7 @@ class CollisionDataset(Dataset):
             raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
             
 
-class AutoencoderDataset(CollisionDataset):
+class AutoencoderDataset(Dataset):
     def __init__(self, data, header=None, scaler=None, target_col=None, index_col=None):
         if type(data) is np.ndarray:
             if target_col is not None:
@@ -184,59 +184,108 @@ class AutoencoderDataset(CollisionDataset):
             
         self._tX = th.from_numpy(self._transform(X)).float()
         self._tY = self._tX
+        
+        
+    def __len__(self):
+        return len(self._tY)
+    
+    
+    def __getitem__(self, idx):
+        X = th.from_numpy(self._tX.numpy()[idx])
+        y = th.from_numpy(self._tY.numpy()[idx[0]]) if type(idx) is tuple else th.from_numpy(self._tY.numpy()[idx])
+        return (X, y)
+    
+    
+    def _transform(self, numpy_array, inverse=False):
+        if not inverse:
+            if self._scale_type == 'scikit':
+                return self.scaler.transform(numpy_array)
+            elif self._scale_type == 'manual':
+                return (numpy_array - self.scaler[0])/self.scaler[1]
+        else:
+            if self._scale_type == 'scikit':
+                return self.scaler.inverse_transform(numpy_array)
+            elif self._scale_type == 'manual':
+                return (numpy_array*self.scaler[1]) + self.scaler[0]
+        
+        
+    @property
+    def shape(self):
+        return self._tX.numpy().shape
+        
+        
+    def save_scaler(self, filename):
+        if filename.endswith(".npz"):
+            if self._scale_type == 'scikit':
+                np.savez_compressed(filename, mean=self.scaler.mean_.astype('float32'), std=self.scaler.scale_.astype('float32'))
+            elif self._scale_type == 'manual':
+                np.savez_compressed(filename, mean=self.scaler[0], std=self.scaler[1])
+        
+        
+    def load_scaler(self, scaler):
+        if type(scaler) is str and scaler.endswith(".npz"):
+            params = np.load(scaler)
+            X = self._transform(self._tX.numpy(), inverse=True)
+            self._scale_type = 'manual'
+            self.scaler = (params["mean"].astype("float32"), params["std"].astype("float32"))
+            self._tX = th.from_numpy(self._transform(X))
+        elif hasattr(scaler, '__iter__') and len(scaler) == 2:
+            X = self._transform(self._tX.numpy(), inverse=True)
+            self.scaler = scaler
+            self._scale_type = 'manual'
+            self._tX = th.from_numpy(self._transform(X))
+        else:
+            raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
+            
+            
+def train(model, criterion, optimizer, trainloader):
+    for inputs, targets in trainloader:
+        inputs, targets = Variable(inputs), Variable(targets)
+        if cuda:
+            inputs = inputs.cuda()
+            targets = targets.cuda()
+        optimizer.zero_grad()
+        
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        loss.backward()
+        optimizer.step()
 
+        
+def test(model, criterion, trainloader, validationloader, cuda=False, scheduler=None):
+    model.eval()
+    train_loss = utils.compute_loss(model, trainloader, criterion, cuda=cuda)
+    val_loss = utils.compute_loss(model, validationloader, criterion, cuda=cuda)
+    model.train()
+    if scheduler is not None:
+        scheduler.step(val_loss)
+    return (train_loss, val_loss)
 
 def score(model, dataset, cut=0.5):
     X, y = Variable(dataset[:][0]).float(), dataset[:][1].type(th.ByteTensor).view(-1, 1)
     out = model(X).data
     predicted = (out >= cut).type(th.ByteTensor)
     return (predicted == y).sum()/out.size()[0]
-
-
-def find_cut(model, dataset, n_steps=100, benchmark="f1"):
-    X, y = Variable(dataset[:][0]).float(), dataset[:][1].type(th.ByteTensor).view(-1, 1)
-    out = model(X).data
-    best_cut = 0
-    best_score = -1
-    for i in range(n_steps+1):
-        cut = i*((out.max() - out.min())/n_steps) + out.min()
-        if benchmark == "f1":
-            score = f1_score(y.numpy(), (out >= cut).type(th.ByteTensor).numpy())
-        elif benchmark == "acc":
-            score = ((out >= cut).type(th.ByteTensor) == y).sum()
-        if score > best_score:
-            best_score = score
-            best_cut = cut
-    return best_cut
-
-
-def print_stats(discriminant, targets, n_steps=100):
-    best_cut = 0
-    best_score = -1
-    for i in range(n_steps+1):
-        cut = i*((discriminant.max() - discriminant.min())/n_steps) + discriminant.min()
-        score = f1_score(targets, (discriminant >= cut).astype(np.int32))
-        if score > best_score:
-            best_score = score
-            best_cut = cut
-    print(classification_report(targets, (discriminant >= best_cut).astype(np.int32)))
-    #print(confusion_matrix(targets, (discriminant >= best_cut).astype(np.int32)))
-    print("Area Under Curve: {}".format(roc_auc_score(targets, discriminant)))
-
     
-def overlay_roc_curves(experiments, title=""):
+    
+def plot_curves(curves, title='Loss Curves'):
+    # Plot the training & validation curves for each epoch
     fig, ax = plt.subplots()
-    for exp in experiments:
-        roc_points = roc_curve(exp['targets'], exp['discriminant'])
-        plt.plot(roc_points[0], roc_points[1], label=exp.get("label"))
-    ax.set_ylabel("True Positive Rate")
-    ax.set_xlabel("False Positive Rate")
-    ax.set_title("ROC Curves {}".format(title))
-    plt.legend(loc='lower right')
+    plt.plot(range(len(curves)), curves)
+    ax.set_ylabel("BCE Loss")
+    ax.set_xlabel("Epochs Finished")
+    ax.set_title("Loss Curves for Fine Tuning")
+    # Get the default colors
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    # Build legend entries
+    train_patch = mpatches.Patch(color=colors[0], label='Training')
+    val_patch = mpatches.Patch(color=colors[1], label='Validation')
+    # Construct the legend
+    plt.legend(handles=[train_patch, val_patch], loc='lower right')
     fig.set_size_inches(18, 10)
-    
+    return fig
 
-def compute_loss(model, dataloader, loss, cuda=False, variable=False):
+def compute_loss(model, dataloader, loss, cuda=False):
     switch = True
     for X, y in dataloader:
         X, y = Variable(X), Variable(y)
@@ -248,6 +297,4 @@ def compute_loss(model, dataloader, loss, cuda=False, variable=False):
             switch = False
         else:
             running_loss = (running_loss + loss(model(X), y).view(1).data)/2
-    if variable:
-        return running_loss
     return running_loss.cpu().numpy().item()
