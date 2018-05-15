@@ -1,6 +1,7 @@
 from __future__ import print_function, division
 import pandas as pd
 import numpy as np
+import numpy.random as rand
 import torch as th
 from torch.utils.data import Dataset
 from torch.autograd import Variable
@@ -10,6 +11,7 @@ from sklearn.metrics import roc_curve, roc_auc_score, classification_report, con
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import os.path as ospath
 import itertools
 
@@ -238,8 +240,12 @@ class AutoencoderDataset(Dataset):
             raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
             
             
-def train(model, criterion, optimizer, trainloader, cuda=False):
+def train(model, criterion, optimizer, trainloader, cuda=False, noise=False):
     for inputs, targets in trainloader:
+        if noise:
+            features = inputs.shape[1]
+            choice = th.from_numpy(rand.choice(np.arange(features), int(features*0.3), replace=False).astype('int32')).long()
+            inputs.index_fill_(1, choice, 0.0)
         inputs, targets = Variable(inputs), Variable(targets)
         if cuda:
             inputs = inputs.cuda()

@@ -82,22 +82,22 @@ val_curveAE = [utils.test(anet, criterion, trainloaderAE, validationloaderAE, cu
 print("Training the SDAE")
 
 current_num_layers = 1
-for epoch in range(1, args.epochs+1):
-    utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda)
+for epoch in range(1, 31):
+    utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda, noise=True)
     losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, scheduler=scheduler)
     val_curveAE.append(losses)
 
-while current_num_layers < self.layers:
+while current_num_layers < args.layers:
     # Add another layer to the autoencoder
     anet.add_layer()
     anet.freeze(range(current_num_layers))
     if cuda: anet.cuda()
-    optimizer = optim.Adam(anet.parameters(), lr=args.learning_rate)
+    optimizer = optim.Adam(anet.grad_parameters(), lr=args.learning_rate)
     scheduler = ReduceLROnPlateau(optimizer, verbose=True)
     current_num_layers += 1
     # Re-train the AE with the previous layers frozen
-    for epoch in range(1, args.epochs+1):
-        utils.train(anet, criterion, optimizer, trainloaderAE)
+    for epoch in range(1, 31):
+        utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda, noise=True)
         losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, scheduler=scheduler)
         val_curveAE.append(losses)
 
@@ -117,7 +117,7 @@ scheduler = ReduceLROnPlateau(optimizer, verbose=True)
     
 print("Calculating Initial Loss for the Fine Tuning")
 
-val_curve = [utils.test(anet, criterion, trainloader, validationloader, cuda=cuda)]
+val_curve = [utils.test(dnet, criterion, trainloader, validationloader, cuda=cuda)]
 
 print("Fine Tuning the NN")
 for epoch in range(1, args.epochs+1):
@@ -126,8 +126,8 @@ for epoch in range(1, args.epochs+1):
     val_curve.append(losses)
 print("Done")
 
-autoencoder_fig = utils.plot_curves(val_curveAE)
-fine_tune_fig = utils.plot_curves(val_curve)
+autoencoder_fig = utils.plot_curves(val_curveAE, title='Autoencoder Loss Curves')
+fine_tune_fig = utils.plot_curves(val_curve, title='Fine Tuning Loss Curves')
 
 dnet.eval()
 dnet.cpu()
@@ -135,9 +135,11 @@ if args.name:
     fine_tune_fig.savefig("{}_val_curve_fine_tune.png".format(args.name))
     autoencoder_fig.savefig("{}_val_curveAE.png".format(args.name))
     trainset.save_scaler("{}_standardizer.npz".format(args.name))
-    th.save(dnet.state_dict(), "{}_net.pth".format(args.name))
+    th.save(dnet.state_dict(), "{}_sdae_net.pth".format(args.name))
+    th.save(dnet.state_dict(), "{}_fine_tuned_net.pth".format(args.name))
 else:
     fine_tune_fig.savefig("{}_val_curve_fine_tune.png".format(args.name))
     autoencoder_fig.savefig("{}_val_curveAE.png".format(args.name))
     trainset.save_scaler("data_standardizer.npz")
-    th.save(dnet.state_dict(), "neural_net.pth")
+    th.save(dnet.state_dict(), "{}_sdae_net.pth".format(args.name))
+    th.save(dnet.state_dict(), "{}_fine_tuned_net.pth".format(args.name))

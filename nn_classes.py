@@ -2,8 +2,6 @@ from __future__ import print_function, division
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-import numpy.random as rand
 
 try:
     xrange
@@ -133,8 +131,13 @@ class SDAENet(nn.Module):
         self.linear_layers = nn.ModuleList()
         self.activation_layers = nn.ModuleList()
         self.norm_layers = nn.ModuleList()
-        for i in range(num_layers):
-            self.linear_layers.append(nn.Linear(input_dim, input_dim*width))
+        # Add the first hidden layer
+        self.linear_layers.append(nn.Linear(input_dim, input_dim*width))
+        self.activation_layers.append(nn.PReLU())
+        self.norm_layers.append(nn.BatchNorm1d(input_dim*width))
+        # Add the rest
+        for i in range(num_layers-1):
+            self.linear_layers.append(nn.Linear(input_dim*width, input_dim*width))
             self.activation_layers.append(nn.PReLU())
             self.norm_layers.append(nn.BatchNorm1d(input_dim*width))
         self.output_layer = nn.Linear(input_dim*width, input_dim)
@@ -143,9 +146,6 @@ class SDAENet(nn.Module):
         
 
     def forward(self, x):
-        batch_size = len(x)
-        choice = th.from_numpy(rand.choice(np.arange(batch_size), int(batch_size*0.3), replace=False))
-        x.index_fill_(1, choice, 0)
         for i in range(self.num_layers):
             x = self.norm_layers[i](self.activation_layers[i](self.linear_layers[i](x)))
             if i%2 == 1:
@@ -165,7 +165,7 @@ class SDAENet(nn.Module):
     def freeze(self, layer_num):
         if hasattr(layer_num, '__iter__'):
             for i in layer_num:
-                self.__freezer(layer_num, False)
+                self.__freezer(i, False)
         else:
             self.__freezer(layer_num, False)
     
@@ -173,19 +173,24 @@ class SDAENet(nn.Module):
     def unfreeze(self, layer_num):
         if hasattr(layer_num, '__iter__'):
             for i in layer_num:
-                self.__freezer(layer_num, True)
+                self.__freezer(i, True)
         else:
             self.__freezer(layer_num, True)
     
     
     def add_layer(self):
-        self.linear_layers.append(nn.Linear(input_dim, input_dim*width))
+        w = self.encoder_dim
+        self.linear_layers.append(nn.Linear(w, w))
         self.activation_layers.append(nn.PReLU())
-        self.norm_layers.append(nn.BatchNorm1d(input_dim*width))
+        self.norm_layers.append(nn.BatchNorm1d(w))
     
     
     def get_encoder(self):
         return (self.linear_layers, self.activation_layers, self.norm_layers)
+
+
+    def grad_parameters(self):
+        return (p for p in self.parameters() if p.requires_grad is True)
     
     
 class FineTuneNet(nn.Module):
