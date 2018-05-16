@@ -180,6 +180,7 @@ class SDAENet(nn.Module):
     
     def add_layer(self):
         w = self.encoder_dim
+        self.num_layers += 1
         self.linear_layers.append(nn.Linear(w, w))
         self.activation_layers.append(nn.PReLU())
         self.norm_layers.append(nn.BatchNorm1d(w))
