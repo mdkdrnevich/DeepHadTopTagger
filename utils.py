@@ -100,7 +100,7 @@ class CollisionDataset(Dataset):
             self._tX = th.from_numpy(self._tX.numpy()[subsample])
             self._tY = th.from_numpy(self._tY.numpy()[subsample])
         else:
-            return (th.from_numpy(self._tX.numpy()[subsample]), th.from_numpy(self._tY.numpy()[subsample]))
+            return CollisionDataset(self._remerge()[subsample], scaler=self.scaler)
         
      
     def shuffle(self, inplace=True):
@@ -111,7 +111,7 @@ class CollisionDataset(Dataset):
             self._tX = th.from_numpy(self._tX.numpy()[indices])
             self._tY = th.from_numpy(self._tY.numpy()[indices])
         else:
-            return (th.from_numpy(self._tX.numpy()[indices]), th.from_numpy(self._tY.numpy()[indices]))
+            return CollisionDataset(self._remerge()[indices], scaler=self.scaler)
         
     
     def slice(self, start, end, dim=0):
