@@ -70,7 +70,7 @@ if cuda: anet.cuda()
 
 criterion = nn.MSELoss()
 optimizer = optim.Adam(anet.parameters(), lr=args.learning_rate)
-scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+#scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 
 #if th.cuda.device_count() > 1:
 #    dnet = nn.DataParallel(dnet)
@@ -84,7 +84,7 @@ print("Training the SDAE")
 current_num_layers = 1
 for epoch in range(1, 31):
     utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda, noise=True)
-    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, scheduler=scheduler)
+    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda)#, scheduler=scheduler)
     val_curveAE.append(losses)
 
 while current_num_layers < args.layers:
@@ -93,12 +93,12 @@ while current_num_layers < args.layers:
     anet.freeze(range(current_num_layers))
     if cuda: anet.cuda()
     optimizer = optim.Adam(anet.grad_parameters(), lr=args.learning_rate)
-    scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+    #scheduler = ReduceLROnPlateau(optimizer, verbose=True)
     current_num_layers += 1
     # Re-train the AE with the previous layers frozen
     for epoch in range(1, 31):
         utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda, noise=True)
-        losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, scheduler=scheduler)
+        losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda)#, scheduler=scheduler)
         val_curveAE.append(losses)
 
 print("Finished Training the SDAE")
@@ -113,7 +113,7 @@ if cuda: dnet.cuda()
 criterion = nn.BCELoss()
 optimizer = optim.Adam(dnet.parameters(), lr=args.learning_rate)
 #optimizer = optim.SGD(dnet.parameters(), lr=5e-4, momentum=0.9, nesterov=True)
-scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+#scheduler = ReduceLROnPlateau(optimizer, verbose=True)
     
 print("Calculating Initial Loss for the Fine Tuning")
 
@@ -122,7 +122,7 @@ val_curve = [utils.test(dnet, criterion, trainloader, validationloader, cuda=cud
 print("Fine Tuning the NN")
 for epoch in range(1, args.epochs+1):
     utils.train(dnet, criterion, optimizer, trainloader, cuda=cuda)
-    losses = utils.test(dnet, criterion, trainloader, validationloader, cuda=cuda, scheduler=scheduler)
+    losses = utils.test(dnet, criterion, trainloader, validationloader, cuda=cuda)#, scheduler=scheduler)
     val_curve.append(losses)
 print("Done")
 
