@@ -74,7 +74,6 @@ class SDAENet(nn.Module):
         #  - Batch Normalization
         #  - Dropout
         self.num_layers = num_layers
-        self.encoder_dim = input_dim*width
         self.noise_level = 0.3
         self.linear_layers = nn.ModuleList()
         self.activation_layers = nn.ModuleList()
@@ -93,7 +92,6 @@ class SDAENet(nn.Module):
         else:
             self.output_layer = nn.Linear(input_dim*width, input_dim*width)
 
-        
         
     def noisy(self, x):
         cuda = th.cuda.is_available()
@@ -142,13 +140,14 @@ class SDAENet(nn.Module):
             self.__freezer(layer_num, True)
     
     
-    def add_layer(self):
-        w = self.encoder_dim
+    def add_layer(self, size=None):
+        in_size = self.linear_layers[-1].out_features
+        out_size = in_size if size is None else int(size*in_size)
         self.num_layers += 1
-        self.linear_layers.append(nn.Linear(w, w))
+        self.linear_layers.append(nn.Linear(in_size, out_size))
         self.activation_layers.append(nn.PReLU())
-        self.norm_layers.append(nn.BatchNorm1d(w))
-        self.output_layer = nn.Linear(w, w)
+        self.norm_layers.append(nn.BatchNorm1d(out_size))
+        self.output_layer = nn.Linear(out_size, in_size)
     
     
     def get_encoder(self):
@@ -169,8 +168,8 @@ class FineTuneNet(nn.Module):
         for i in range(encoder.num_layers):
             for j in range(len(layers)):
                 self.layers.append(layers[j][i])
-        self.output_layer = nn.Linear(encoder.encoder_dim, 1)
-        self.dropout = nn.Dropout(0.2)
+        self.output_layer = nn.Linear(encoder.linear_layers[-1].out_features, 1)
+        self.dropout = nn.Dropout(0.5)
         
         
     def forward(self, x):

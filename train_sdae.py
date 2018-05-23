@@ -71,37 +71,40 @@ if cuda: anet.cuda()
 criterion = nn.MSELoss()
 optimizer = optim.Adam(anet.parameters(), lr=args.learning_rate)
 scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+training_params = {'cuda': cuda,
+                   'sdae': True,
+                   'scheduler': scheduler}
 
 #if th.cuda.device_count() > 1:
 #    dnet = nn.DataParallel(dnet)
 
 print("Calculating Initial Loss for the Autoencoder")
 
-val_curveAE = [utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, sdae=True)]
+val_curveAE = [utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)]
 
 print("Training the SDAE")
 
 current_num_layers = 1
 for epoch in range(1, 51):
-    utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda, sdae=True)
-    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, scheduler=scheduler, sdae=True)
+    utils.train(anet, criterion, optimizer, trainloaderAE, **training_params)
+    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)
     val_curveAE.append(losses)
 
 while current_num_layers < args.layers:
-    # Add another layer to the autoencoder
-    anet.add_layer()
+    # Add another layer to the autoencoder with dimension 1.5 times the size of its input
+    anet.add_layer(1.5)
     anet.freeze(range(current_num_layers))
     if cuda: anet.cuda()
     optimizer = optim.Adam(anet.grad_parameters(), lr=args.learning_rate)
-    scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+    training_params['scheduler'] = ReduceLROnPlateau(optimizer, verbose=True)
     current_num_layers += 1
     # Calculate the initial error
-    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, sdae=True)
+    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)
     val_curveAE.append(losses)
     # Re-train the AE with the previous layers frozen
     for epoch in range(1, 41):
-        utils.train(anet, criterion, optimizer, trainloaderAE, cuda=cuda, sdae=True)
-        losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, cuda=cuda, scheduler=scheduler, sdae=True)
+        utils.train(anet, criterion, optimizer, trainloaderAE, **training_params)
+        losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)
         val_curveAE.append(losses)
 
 print("Finished Training the SDAE")
@@ -117,15 +120,18 @@ criterion = nn.BCELoss()
 optimizer = optim.Adam(dnet.parameters(), lr=args.learning_rate)
 #optimizer = optim.SGD(dnet.parameters(), lr=5e-4, momentum=0.9, nesterov=True)
 scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+training_params = {'cuda': cuda,
+                   'sdae': False,
+                   'scheduler': scheduler}
     
 print("Calculating Initial Loss for the Fine Tuning")
 
-val_curve = [utils.test(dnet, criterion, trainloader, validationloader, cuda=cuda)]
+val_curve = [utils.test(dnet, criterion, trainloader, validationloader, **training_params)]
 
 print("Fine Tuning the NN")
 for epoch in range(1, args.epochs+1):
-    utils.train(dnet, criterion, optimizer, trainloader, cuda=cuda)
-    losses = utils.test(dnet, criterion, trainloader, validationloader, cuda=cuda, scheduler=scheduler)
+    utils.train(dnet, criterion, optimizer, trainloader, **training_params)
+    losses = utils.test(dnet, criterion, trainloader, validationloader, **training_params)
     val_curve.append(losses)
 print("Done")
 

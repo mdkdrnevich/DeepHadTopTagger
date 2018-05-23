@@ -240,19 +240,19 @@ class AutoencoderDataset(Dataset):
             raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
             
             
-def train(model, criterion, optimizer, trainloader, cuda=False, noise=False, sdae=False):
+def train(model, criterion, optimizer, trainloader, **kwargs):
     for inputs, targets in trainloader:
-        if noise:
+        if kwargs.get('noise'):
             features = inputs.shape[1]
             choice = th.from_numpy(rand.choice(np.arange(features), int(features*0.3), replace=False).astype('int32')).long()
             inputs.index_fill_(1, choice, 0.0)
         inputs, targets = Variable(inputs), Variable(targets)
-        if cuda:
+        if kwargs.get('cuda'):
             inputs = inputs.cuda()
             targets = targets.cuda()
         optimizer.zero_grad()
         
-        if sdae is True:
+        if kwargs.get('sdae'):
             outputs, targets = model(inputs)
         else:
             outputs = model(inputs)
@@ -263,10 +263,10 @@ def train(model, criterion, optimizer, trainloader, cuda=False, noise=False, sda
         
 def test(model, criterion, trainloader, validationloader, cuda=False, scheduler=None, sdae=False):
     model.eval()
-    train_loss = compute_loss(model, trainloader, criterion, cuda=cuda, sdae=sdae)
-    val_loss = compute_loss(model, validationloader, criterion, cuda=cuda, sdae=sdae)
+    train_loss = compute_loss(model, trainloader, criterion, **kwargs)
+    val_loss = compute_loss(model, validationloader, criterion, **kwargs)
     model.train()
-    if scheduler is not None:
+    if kwargs.get('scheduler') is not None:
         scheduler.step(val_loss)
     return (train_loss, val_loss)
 
@@ -295,14 +295,14 @@ def plot_curves(curves, title='Loss Curves'):
     fig.set_size_inches(18, 10)
     return fig
 
-def compute_loss(model, dataloader, loss, cuda=False, sdae=False):
+def compute_loss(model, dataloader, loss, **kwargs):
     switch = True
     for X, y in dataloader:
         X, y = Variable(X), Variable(y)
-        if cuda:
+        if kwargs.get('cuda'):
             X = X.cuda()
             y = y.cuda()
-        if sdae is True:
+        if kwargs.get('sdae'):
             outputs, y = model(X)
         else:
             outputs = model(X)
