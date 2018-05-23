@@ -96,9 +96,12 @@ class SDAENet(nn.Module):
         
         
     def noisy(self, x):
+        cuda = th.cuda.is_available()
         data = x.data
         features = data.shape[1]
         choice = th.from_numpy(rand.choice(np.arange(features), int(features*self.noise_level), replace=False).astype('int32')).long()
+        if cuda:
+            choice = choice.cuda()
         data.index_fill_(1, choice, 0.0)
         return x
         
