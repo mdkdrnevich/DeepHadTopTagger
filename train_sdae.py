@@ -76,9 +76,11 @@ training_params = {'cuda': cuda,
                    'scheduler': scheduler}
 
 # Define the way to compute the loss and return it
-def costSDAE(model, X, y):
+# Add a penalty term that makes the last hidden layer activations sparse
+def costSDAE(model, X, y, p=0.05, beta=0.04):
     outputs, targets = model(X)
-    return criterion(outputs, targets)
+    pmat = Variable(th.log(th.ones(model.activations.size())*p))
+    return criterion(outputs, targets) + beta*F.kl_div(pmat, th.log(model.activations))
 
 #if th.cuda.device_count() > 1:
 #    dnet = nn.DataParallel(dnet)

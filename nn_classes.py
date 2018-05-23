@@ -75,6 +75,7 @@ class SDAENet(nn.Module):
         #  - Dropout
         self.num_layers = num_layers
         self.noise_level = 0.3
+        self.activations = None
         self.linear_layers = nn.ModuleList()
         self.activation_layers = nn.ModuleList()
         self.norm_layers = nn.ModuleList()
@@ -111,7 +112,9 @@ class SDAENet(nn.Module):
             x = self.norm_layers[i](self.activation_layers[i](self.linear_layers[i](x)))
         h = x.clone()
         x = self.noisy(x)
-        x = self.norm_layers[N](self.activation_layers[N](self.linear_layers[N](x)))
+        a = self.activation_layers[N](self.linear_layers[N](x))
+        self.activations = a.clone()
+        x = self.norm_layers[N](a)
         return (self.output_layer(x), h)
     
     
