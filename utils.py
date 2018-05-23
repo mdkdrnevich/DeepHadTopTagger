@@ -302,10 +302,13 @@ def compute_loss(model, dataloader, loss, cuda=False, sdae=False):
         if cuda:
             X = X.cuda()
             y = y.cuda()
+        if sdae is True:
+            outputs, y = model(X)
+        else:
+            outputs = model(X)
         if switch:
-            running_loss = loss(model(X), y).view(1).data if sdae is False else loss(model(X)).view(1).data
+            running_loss = loss(outputs, y).view(1).data
             switch = False
         else:
-            err = loss(model(X), y).view(1).data if sdae is False else loss(model(X)).view(1).data
-            running_loss = (running_loss + err)/2
+            running_loss = (running_loss + loss(outputs, y).view(1).data)/2
     return running_loss.cpu().numpy().item()
