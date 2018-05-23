@@ -240,7 +240,7 @@ class AutoencoderDataset(Dataset):
             raise ValueError("Only .npz files and (<numpy.ndarray: means>, <numpy.ndarray: std>) allowed at this time")
             
             
-def train(model, criterion, optimizer, trainloader, cuda=False, noise=False):
+def train(model, criterion, optimizer, trainloader, cuda=False, noise=False, sdae=False):
     for inputs, targets in trainloader:
         if noise:
             features = inputs.shape[1]
@@ -252,16 +252,19 @@ def train(model, criterion, optimizer, trainloader, cuda=False, noise=False):
             targets = targets.cuda()
         optimizer.zero_grad()
         
-        outputs = model(inputs)
+        if sdae is True:
+            outputs, targets = model(inputs)
+        else:
+            outputs = model(inputs)
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
 
         
-def test(model, criterion, trainloader, validationloader, cuda=False, scheduler=None):
+def test(model, criterion, trainloader, validationloader, cuda=False, scheduler=None, sdae=False):
     model.eval()
-    train_loss = compute_loss(model, trainloader, criterion, cuda=cuda)
-    val_loss = compute_loss(model, validationloader, criterion, cuda=cuda)
+    train_loss = compute_loss(model, trainloader, criterion, cuda=cuda, sdae=sdae)
+    val_loss = compute_loss(model, validationloader, criterion, cuda=cuda, sdae=sdae)
     model.train()
     if scheduler is not None:
         scheduler.step(val_loss)
@@ -292,7 +295,7 @@ def plot_curves(curves, title='Loss Curves'):
     fig.set_size_inches(18, 10)
     return fig
 
-def compute_loss(model, dataloader, loss, cuda=False):
+def compute_loss(model, dataloader, loss, cuda=False, sdae=False):
     switch = True
     for X, y in dataloader:
         X, y = Variable(X), Variable(y)
@@ -300,8 +303,9 @@ def compute_loss(model, dataloader, loss, cuda=False):
             X = X.cuda()
             y = y.cuda()
         if switch:
-            running_loss = loss(model(X), y).view(1).data
+            running_loss = loss(model(X), y).view(1).data if sdae is False else loss(model(X)).view(1).data
             switch = False
         else:
-            running_loss = (running_loss + loss(model(X), y).view(1).data)/2
+            err = loss(model(X), y).view(1).data if sdae is False else loss(model(X)).view(1).data
+            running_loss = (running_loss + err)/2
     return running_loss.cpu().numpy().item()

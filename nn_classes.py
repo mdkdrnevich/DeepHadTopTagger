@@ -2,6 +2,8 @@ from __future__ import print_function, division
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
+import numpy.random as rand
 
 try:
     xrange
@@ -60,62 +62,6 @@ class DHTTNet(nn.Module):
         x = self.norm7(self.f7(self.lin7(x)))
         x = F.sigmoid(self.lin10(x))
         return x
-    
-    
-class smaller_DHTTNet(DHTTNet):       
-    def forward(self, x):
-        x = self.norm1(self.f1(self.lin1(x)))
-        x = self.dropout(self.norm2(self.f2(self.lin2(x))))
-        x = self.norm3(self.f3(self.lin3(x)))
-        x = self.dropout(self.norm6(self.f6(self.lin6(x))))
-        x = self.norm7(self.f7(self.lin7(x)))
-        x = self.dropout(self.norm8(self.f8(self.lin8(x))))
-        x = self.norm9(self.f9(self.lin9(x)))
-        x = F.sigmoid(self.lin10(x))
-        return x
-    
-    
-class smallest_DHTTNet(DHTTNet):        
-    def forward(self, x):
-        x = self.norm1(self.f1(self.lin1(x)))
-        x = self.dropout(self.norm2(self.f2(self.lin2(x))))
-        x = self.norm7(self.f7(self.lin7(x)))
-        x = self.dropout(self.norm8(self.f8(self.lin8(x))))
-        x = self.norm9(self.f9(self.lin9(x)))
-        x = F.sigmoid(self.lin10(x))
-        return x
-    
-    
-class tiny_DHTTNet(DHTTNet):        
-    def forward(self, x):
-        x = self.norm1(self.f1(self.lin1(x)))
-        x = self.dropout(self.norm8(self.f8(self.lin8(x))))
-        x = self.norm9(self.f9(self.lin9(x)))
-        x = F.sigmoid(self.lin10(x))
-        return x
-        
-        
-class TinyNet(nn.Module):
-    def __init__(self, input_dim):
-        super(TinyNet, self).__init__()
-        # Layers
-        #  - Linear
-        #  - Activation
-        #  - Batch Normalization
-        #  - Dropout
-        self.lin9 = nn.Linear(input_dim, input_dim//2)
-        self.f9 = nn.PReLU(input_dim//2)
-        self.norm9 = nn.BatchNorm1d(input_dim//2)
-        #
-        self.lin10 = nn.Linear(input_dim//2, 1)
-        # Dropout Layer
-        self.dropout = nn.Dropout(0.2)
-        
-        
-    def forward(self, x):
-        x = self.norm9(self.f9(self.lin9(x)))
-        x = F.sigmoid(self.lin10(x))
-        return x
 
     
 class SDAENet(nn.Module):
@@ -128,6 +74,7 @@ class SDAENet(nn.Module):
         #  - Dropout
         self.num_layers = num_layers
         self.encoder_dim = input_dim*width
+        self.noise_level = 0.3
         self.linear_layers = nn.ModuleList()
         self.activation_layers = nn.ModuleList()
         self.norm_layers = nn.ModuleList()
@@ -140,17 +87,33 @@ class SDAENet(nn.Module):
             self.linear_layers.append(nn.Linear(input_dim*width, input_dim*width))
             self.activation_layers.append(nn.PReLU())
             self.norm_layers.append(nn.BatchNorm1d(input_dim*width))
-        self.output_layer = nn.Linear(input_dim*width, input_dim)
-        # Dropout Layer
-        self.dropout = nn.Dropout(0.2)
+        if num_layers == 1:
+            self.output_layer = nn.Linear(input_dim*width, input_dim)
+        else:
+            self.output_layer = nn.Linear(input_dim*width, input_dim*width)
+
+        
+        
+    def noisy(self, x):
+        x.requires_grad = False
+        features = x.data.shape[1]
+        choice = th.from_numpy(rand.choice(np.arange(features), int(features*self.noise_level), replace=False).astype('int32')).long()
+        x.index_fill_(1, choice, 0.0)
+        x.requires_grad = True
+        return x
         
 
     def forward(self, x):
-        for i in range(self.num_layers):
+        x.reguires_grad = False
+        # Get the features into the last layer
+        N = self.num_layers - 1
+        for i in range(N):
             x = self.norm_layers[i](self.activation_layers[i](self.linear_layers[i](x)))
-            if i%2 == 1:
-                x = self.dropout(x)
-        return self.output_layer(x)
+        x.requires_grad = True
+        h = x.clone()
+        x = self.noisy(x)
+        x = self.norm_layers[N](self.activation_layers[N](self.linear_layers[N](x)))
+        return (self.output_layer(x), h)
     
     
     def __freezer(self, num, value):
@@ -184,6 +147,7 @@ class SDAENet(nn.Module):
         self.linear_layers.append(nn.Linear(w, w))
         self.activation_layers.append(nn.PReLU())
         self.norm_layers.append(nn.BatchNorm1d(w))
+        self.output_layer = nn.Linear(w, w)
     
     
     def get_encoder(self):
