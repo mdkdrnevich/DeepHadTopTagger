@@ -241,6 +241,7 @@ class AutoencoderDataset(Dataset):
             
             
 def train(model, criterion, optimizer, trainloader, **kwargs):
+    model.train()
     for inputs, targets in trainloader:
         if kwargs.get('noise'):
             features = inputs.shape[1]
@@ -252,23 +253,35 @@ def train(model, criterion, optimizer, trainloader, **kwargs):
             targets = targets.cuda()
         optimizer.zero_grad()
         
-        if kwargs.get('sdae'):
-            outputs, targets = model(inputs)
-        else:
-            outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        model.eval()
+        loss = criterion(model, inputs, targets)
+        model.train()
         loss.backward()
         optimizer.step()
 
         
 def test(model, criterion, trainloader, validationloader, **kwargs):
-    model.eval()
-    train_loss = compute_loss(model, trainloader, criterion, **kwargs)
-    val_loss = compute_loss(model, validationloader, criterion, **kwargs)
-    model.train()
+    train_loss = compute_loss(model, criterion, trainloader, **kwargs)
+    val_loss = compute_loss(model, criterion, validationloader, **kwargs)
     if kwargs.get('scheduler') is not None:
         kwargs.get('scheduler').step(val_loss)
     return (train_loss, val_loss)
+
+
+def compute_loss(model, loss, dataloader, **kwargs):
+    model.eval()
+    switch = True
+    for X, y in dataloader:
+        X, y = Variable(X), Variable(y)
+        if kwargs.get('cuda'):
+            X = X.cuda()
+            y = y.cuda()
+        if switch:
+            running_loss = loss(model, X, y).view(1).data
+            switch = False
+        else:
+            running_loss = (running_loss + loss(model, X, y).view(1).data)/2
+    return running_loss.cpu().numpy().item()
 
 
 def score(model, dataset, cut=0.5):
@@ -294,21 +307,3 @@ def plot_curves(curves, title='Loss Curves'):
     plt.legend(handles=[train_patch, val_patch], loc='lower right')
     fig.set_size_inches(18, 10)
     return fig
-
-def compute_loss(model, dataloader, loss, **kwargs):
-    switch = True
-    for X, y in dataloader:
-        X, y = Variable(X), Variable(y)
-        if kwargs.get('cuda'):
-            X = X.cuda()
-            y = y.cuda()
-        if kwargs.get('sdae'):
-            outputs, y = model(X)
-        else:
-            outputs = model(X)
-        if switch:
-            running_loss = loss(outputs, y).view(1).data
-            switch = False
-        else:
-            running_loss = (running_loss + loss(outputs, y).view(1).data)/2
-    return running_loss.cpu().numpy().item()

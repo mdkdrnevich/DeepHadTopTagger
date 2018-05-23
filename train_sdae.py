@@ -75,19 +75,24 @@ training_params = {'cuda': cuda,
                    'sdae': True,
                    'scheduler': scheduler}
 
+# Define the way to compute the loss and return it
+def costSDAE(model, X, y):
+    outputs, targets = model(X)
+    return criterion(outputs, targets)
+
 #if th.cuda.device_count() > 1:
 #    dnet = nn.DataParallel(dnet)
 
 print("Calculating Initial Loss for the Autoencoder")
 
-val_curveAE = [utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)]
+val_curveAE = [utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **training_params)]
 
 print("Training the SDAE")
 
 current_num_layers = 1
 for epoch in range(1, 51):
-    utils.train(anet, criterion, optimizer, trainloaderAE, **training_params)
-    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)
+    utils.train(anet, costSDAE, optimizer, trainloaderAE, **training_params)
+    losses = utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **training_params)
     val_curveAE.append(losses)
 
 while current_num_layers < args.layers:
@@ -99,12 +104,12 @@ while current_num_layers < args.layers:
     training_params['scheduler'] = ReduceLROnPlateau(optimizer, verbose=True)
     current_num_layers += 1
     # Calculate the initial error
-    losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)
+    losses = utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **training_params)
     val_curveAE.append(losses)
     # Re-train the AE with the previous layers frozen
     for epoch in range(1, 41):
-        utils.train(anet, criterion, optimizer, trainloaderAE, **training_params)
-        losses = utils.test(anet, criterion, trainloaderAE, validationloaderAE, **training_params)
+        utils.train(anet, costSDAE, optimizer, trainloaderAE, **training_params)
+        losses = utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **training_params)
         val_curveAE.append(losses)
 
 print("Finished Training the SDAE")
@@ -123,15 +128,20 @@ scheduler = ReduceLROnPlateau(optimizer, verbose=True)
 training_params = {'cuda': cuda,
                    'sdae': False,
                    'scheduler': scheduler}
+
+# Define the way to compute the loss and return it
+def cost(model, X, y):
+    outputs = model(X)
+    return criterion(outputs, y)
     
 print("Calculating Initial Loss for the Fine Tuning")
 
-val_curve = [utils.test(dnet, criterion, trainloader, validationloader, **training_params)]
+val_curve = [utils.test(dnet, cost, trainloader, validationloader, **training_params)]
 
 print("Fine Tuning the NN")
 for epoch in range(1, args.epochs+1):
-    utils.train(dnet, criterion, optimizer, trainloader, **training_params)
-    losses = utils.test(dnet, criterion, trainloader, validationloader, **training_params)
+    utils.train(dnet, cost, optimizer, trainloader, **training_params)
+    losses = utils.test(dnet, cost, trainloader, validationloader, **training_params)
     val_curve.append(losses)
 print("Done")
 
