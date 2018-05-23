@@ -2,6 +2,7 @@ from __future__ import print_function, division
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
 import numpy as np
 import numpy.random as rand
 
@@ -95,21 +96,18 @@ class SDAENet(nn.Module):
         
         
     def noisy(self, x):
-        x.requires_grad = False
-        features = x.data.shape[1]
+        data = x.data
+        features = data.shape[1]
         choice = th.from_numpy(rand.choice(np.arange(features), int(features*self.noise_level), replace=False).astype('int32')).long()
-        x.index_fill_(1, choice, 0.0)
-        x.requires_grad = True
+        data.index_fill_(1, choice, 0.0)
         return x
         
 
     def forward(self, x):
-        x.reguires_grad = False
         # Get the features into the last layer
         N = self.num_layers - 1
         for i in range(N):
             x = self.norm_layers[i](self.activation_layers[i](self.linear_layers[i](x)))
-        x.requires_grad = True
         h = x.clone()
         x = self.noisy(x)
         x = self.norm_layers[N](self.activation_layers[N](self.linear_layers[N](x)))
