@@ -267,7 +267,7 @@ def test(model, criterion, trainloader, validationloader, **kwargs):
     val_loss = compute_loss(model, validationloader, criterion, **kwargs)
     model.train()
     if kwargs.get('scheduler') is not None:
-        scheduler.step(val_loss)
+        kwargs.get('scheduler').step(val_loss)
     return (train_loss, val_loss)
 
 
