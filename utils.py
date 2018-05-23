@@ -261,7 +261,7 @@ def train(model, criterion, optimizer, trainloader, **kwargs):
         optimizer.step()
 
         
-def test(model, criterion, trainloader, validationloader, cuda=False, scheduler=None, sdae=False):
+def test(model, criterion, trainloader, validationloader, **kwargs):
     model.eval()
     train_loss = compute_loss(model, trainloader, criterion, **kwargs)
     val_loss = compute_loss(model, validationloader, criterion, **kwargs)
