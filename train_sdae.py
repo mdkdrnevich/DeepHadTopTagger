@@ -80,6 +80,8 @@ training_params = {'cuda': cuda,
 def costSDAE(model, X, y, p=0.05, beta=0.4):
     outputs, targets = model(X)
     pmat = Variable(th.log(th.ones(model.activations.size())*p))
+    if cuda:
+        pmat = pmat.cuda()
     return criterion(outputs, targets) + beta*F.kl_div(pmat, th.log(model.activations))
 
 #if th.cuda.device_count() > 1:
