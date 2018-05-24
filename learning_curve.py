@@ -78,9 +78,13 @@ for i in range(1, args.subsets+1):
     scheduler = ReduceLROnPlateau(optimizer, verbose=True)
     print("Training DNN {}".format(i))
     
+    def cost(model, X, y):
+        outputs = model(X)
+        return criterion(outputs, y)
+    
     for epoch in range(1, args.epochs+1):
-        utils.train(dnet, criterion, optimizer, trainloader, cuda=cuda)
-        losses = utils.test(dnet, criterion, trainloader, validationloader, cuda=cuda, scheduler=scheduler)
+        utils.train(dnet, cost, optimizer, trainloader, cuda=cuda)
+        losses = utils.test(dnet, cost, trainloader, validationloader, cuda=cuda, scheduler=scheduler)
         
     val_curve.append(losses)
 print("Done")
