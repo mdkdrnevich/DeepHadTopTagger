@@ -70,7 +70,7 @@ for i in range(1, args.subsets+1):
     validationloader = DataLoader(subvalset, batch_size=batch_size, shuffle=True, num_workers=5)
     num_batches = len(trainloader)
     
-    dnet = ConvDHTTNet(input_dim, args.width)
+    dnet = ConvDHTTNet(input_dim, int(args.width*i/args.subsets))
     if cuda: dnet.cuda()
 
     criterion = nn.BCELoss()
