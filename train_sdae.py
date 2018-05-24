@@ -77,7 +77,7 @@ training_params = {'cuda': cuda,
 
 # Define the way to compute the loss and return it
 # Add a penalty term that makes the last hidden layer activations sparse
-def costSDAE(model, X, y, p=0.05, beta=0.04):
+def costSDAE(model, X, y, p=0.05, beta=0.4):
     outputs, targets = model(X)
     pmat = Variable(th.log(th.ones(model.activations.size())*p))
     return criterion(outputs, targets) + beta*F.kl_div(pmat, th.log(model.activations))
@@ -92,14 +92,14 @@ val_curveAE = [utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **t
 print("Training the SDAE")
 
 current_num_layers = 1
-for epoch in range(1, 51):
+for epoch in range(1, 21):
     utils.train(anet, costSDAE, optimizer, trainloaderAE, **training_params)
     losses = utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **training_params)
     val_curveAE.append(losses)
 
 while current_num_layers < args.layers:
     # Add another layer to the autoencoder with dimension 1.5 times the size of its input
-    anet.add_layer(1.5)
+    anet.add_layer(2)
     anet.freeze(range(current_num_layers))
     if cuda: anet.cuda()
     optimizer = optim.Adam(anet.grad_parameters(), lr=args.learning_rate)
@@ -109,7 +109,7 @@ while current_num_layers < args.layers:
     losses = utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **training_params)
     val_curveAE.append(losses)
     # Re-train the AE with the previous layers frozen
-    for epoch in range(1, 41):
+    for epoch in range(1, 21):
         utils.train(anet, costSDAE, optimizer, trainloaderAE, **training_params)
         losses = utils.test(anet, costSDAE, trainloaderAE, validationloaderAE, **training_params)
         val_curveAE.append(losses)

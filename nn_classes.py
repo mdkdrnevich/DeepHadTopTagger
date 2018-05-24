@@ -172,7 +172,7 @@ class FineTuneNet(nn.Module):
             for j in range(len(layers)):
                 self.layers.append(layers[j][i])
         self.output_layer = nn.Linear(encoder.linear_layers[-1].out_features, 1)
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(0.3)
         
         
     def forward(self, x):
