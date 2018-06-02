@@ -284,13 +284,13 @@ void run_it(TChain* tree, TString output_file)
             TLorentzVector W = *tvec2 + *tvec3;
             TLorentzVector top = *tvec1 + *tvec2 + *tvec3;
               
-            b_wj1_deltaR = deltaR(tvec1->eta(), tvec1->phi(), tvec2->eta(), tvec2->phi());
+            b_wj1_deltaR = deltaR(tvec1->Eta(), tvec1->Phi(), tvec2->Eta(), tvec2->Phi());
             b_wj1_mass = (*tvec1 + *tvec2).M();
-            b_wj2_deltaR = deltaR(tvec1->eta(), tvec1->phi(), tvec3->eta(), tvec3->phi());
+            b_wj2_deltaR = deltaR(tvec1->Eta(), tvec1->Phi(), tvec3->Eta(), tvec3->Phi());
             b_wj2_mass =(*tvec1 + *tvec3).M();
-            w_deltaR = deltaR(tvec2->eta(), tvec2->phi(), tvec3->eta(), tvec3->phi());
+            w_deltaR = deltaR(tvec2->Eta(), tvec2->Phi(), tvec3->Eta(), tvec3->Phi());
             w_mass = W.M();
-            b_w_deltaR = deltaR(tvec1->eta(), tvec1->phi(), W.eta(), W.phi());
+            b_w_deltaR = deltaR(tvec1->Eta(), tvec1->Phi(), W.Eta(), W.Phi());
             top_mass = top.M();
               
             float score = reader->EvaluateMVA("BDT");
