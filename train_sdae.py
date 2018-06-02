@@ -118,7 +118,12 @@ while current_num_layers < args.layers:
 
 print("Finished Training the SDAE")
 
-
+anet.eva()
+anet.cpu()
+if args.name:
+    th.save(anet.state_dict(), "{}_sdae_net.pth".format(args.name))
+else:
+    th.save(anet.state_dict(), "{}_sdae_net.pth".format(args.name))
 
 print("Initializing the Fine Tuning Model")
 
@@ -128,7 +133,8 @@ if cuda: dnet.cuda()
 criterion = nn.BCELoss()
 optimizer = optim.Adam(dnet.parameters(), lr=args.learning_rate)
 #optimizer = optim.SGD(dnet.parameters(), lr=5e-4, momentum=0.9, nesterov=True)
-scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+#scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+scheduler = None
 training_params = {'cuda': cuda,
                    'sdae': False,
                    'scheduler': scheduler}
@@ -154,17 +160,13 @@ fine_tune_fig = utils.plot_curves(val_curve, title='Fine Tuning Loss Curves')
 
 dnet.eval()
 dnet.cpu()
-anet.eval()
-anet.cpu()
 if args.name:
     fine_tune_fig.savefig("{}_val_curve_fine_tune.png".format(args.name))
     autoencoder_fig.savefig("{}_val_curveAE.png".format(args.name))
     trainset.save_scaler("{}_standardizer.npz".format(args.name))
-    th.save(anet.state_dict(), "{}_sdae_net.pth".format(args.name))
     th.save(dnet.state_dict(), "{}_fine_tuned_net.pth".format(args.name))
 else:
     fine_tune_fig.savefig("{}_val_curve_fine_tune.png".format(args.name))
     autoencoder_fig.savefig("{}_val_curveAE.png".format(args.name))
     trainset.save_scaler("data_standardizer.npz")
-    th.save(anet.state_dict(), "{}_sdae_net.pth".format(args.name))
     th.save(dnet.state_dict(), "{}_fine_tuned_net.pth".format(args.name))
