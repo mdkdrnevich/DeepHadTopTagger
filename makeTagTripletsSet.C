@@ -141,23 +141,32 @@ void run_it(TChain* tree, TString output_file)
         } else if (mID == -24 && gmID == -6) {
           matched_jets[1].push_back(pjet);
           matched_ix[1].push_back(ix);
-        } else if (abs(ID) == 15) {
-          tau_lept = true;
-        } else if (ID >= 11 && ID <= 16 && (mID == 24 || gmID == 24)) {
-          num_pos_lept++;  
-        } else if (ID <= -11 && ID >= -16 && (mID == -24 || gmID == -24)) {
-          num_neg_lept++;
         } else {
           unmatched_jets.push_back(pjet);
         }
         ix++;
       }
       
+      for (const auto &gjet : *gen_parts) {
+        int ID = gjet.pdgID;
+        bool mother = (gjet.mother != 9999);
+        bool grandmother = (gjet.grandmother != 9999);
+        int mID = mother ? (*gen_parts)[gjet.mother].pdgID : 0;
+        int gmID = grandmother ? (*gen_parts)[gjet.grandmother].pdgID : 0;
+        if (abs(ID) == 15) {
+          tau_lept = true;
+        } else if (ID >= 11 && ID <= 16 && (mID == 24 || gmID == 24)) {
+          num_pos_lept++;
+        } else if (ID <= -11 && ID >= -16 && (mID == -24 || gmID == -24)) {
+          num_neg_lept++;
+        }
+      }
+      
       // Make sure there's only one hadronic top
       int size = preselected_jets_intree->size();
       bool matched1 = (matched_jets[0].size() == 3);
       bool matched2 = (matched_jets[1].size() == 3);
-      if (matched1 == matched2 || num_pos_lept < 2 || num_neg_lept < 2 || !tau_lept)
+      if ((!matched1 == !matched2) || ((num_pos_lept < 2) == (num_neg_lept < 2)) || !tau_lept)
         continue;
       
       passed_selection++;
