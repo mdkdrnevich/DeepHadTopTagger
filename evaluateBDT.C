@@ -46,43 +46,11 @@ struct pt_key
     }
 };
 
-void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, vector<int> indices)
-{  
-  int size = indices.size();
-  for (int i=0; i<size; i++) {
-    in_file << indices[i];
-    if (i<(size - 1))
-        in_file << ".";
-    else
-        in_file << ",";
-  }
-
-  sort(in_jets.begin(), in_jets.end(), reverse_probb_key());
-  ttH::Jet bjet = in_jets.back();
-  in_file<< bjet.obj.pt() << "," bjet.obj.M() <<",";
-  in_file<< (bjet.DeepCSVprobb + bjet.DeepCSVprobbb) <<","<< bjet.DeepCSVprobc/(bjet.DeepCSVprobc + bjet.DeepCSVprobudsg) <<",";
-  in_file<< bjet.DeepCSVprobc/(bjet.DeepCSVprobc + bjet.DeepCSVprobb + bjet.DeepCSVprobbb) <<",";
-  in_file<< bjet.ptD <<","<< bjet.axis1 <<","<< bjet.mult <<",";
-  
-  in_jets.pop_back();
-  sort(in_jets.begin(), in_jets.end(), pt_key());
-
-  for (const auto & jet : in_jets)
-    {
-      in_file<< jet.obj.pt() << "," jet.obj.M() <<",";
-      in_file<< (jet.DeepCSVprobb + jet.DeepCSVprobbb) <<","<< jet.DeepCSVprobc/(jet.DeepCSVprobc + jet.DeepCSVprobudsg) <<",";
-      in_file<< jet.DeepCSVprobc/(jet.DeepCSVprobc + jet.DeepCSVprobb + jet.DeepCSVprobbb) <<",";
-      in_file<< jet.ptD <<","<< jet.axis1 <<","<< jet.mult <<",";
-    }
-  
-  in_file<<"\n";
-  in_file.flush();
-}
-
 void run_it(TChain* tree, TString output_file)
 {
 
   //int num_hadronic = 0;
+  int correct = 0;
   int treeentries = tree->GetEntries();   
   cout << "# events in tree: "<< treeentries << endl;
   int passed_selection = 0;
@@ -111,6 +79,82 @@ void run_it(TChain* tree, TString output_file)
   tree->SetBranchAddress("lumiBlock", &lumiBlock_intree);
   tree->SetBranchAddress("preselected_jets", &preselected_jets_intree);
   tree->SetBranchAddress("pruned_genParticles", &gen_parts);
+    
+  float b_pt = -99;
+  float b_mass = -99;
+  float b_ptD = -99;
+  float b_axis1 = -99;
+  float b_mult = -99;
+  float b_csv = -99;
+  float b_cvsb = -99;
+  float b_cvsl = -99;
+
+  float wj1_pt = -99;
+  float wj1_mass = -99;
+  float wj1_ptD = -99;
+  float wj1_axis1 = -99;
+  float wj1_mult = -99;
+  float wj1_csv = -99;
+  float wj1_cvsb = -99;
+  float wj1_cvsl = -99;
+
+  float wj2_pt = -99;
+  float wj2_mass = -99;
+  float wj2_ptD = -99;
+  float wj2_axis1 = -99;
+  float wj2_mult = -99;
+  float wj2_csv = -99;
+  float wj2_cvsb = -99;
+  float wj2_cvsl = -99;
+
+  float b_wj1_deltaR = -99;
+  float b_wj1_mass = -99;
+  float b_wj2_deltaR = -99;
+  float b_wj2_mass = -99;
+  float w_deltaR = -99;
+  float w_mass = -99;
+  float b_w_deltaR = -99;
+  float top_mass = -99;
+    
+  reader = TMVA::Reader( "!Color:!Silent" );
+
+  reader->AddVariable("var_b_pt",&b_pt);
+  reader->AddVariable("var_b_mass",&b_mass);
+  reader->AddVariable("var_b_ptD",&b_ptD);
+  reader->AddVariable("var_b_axis1",&b_axis1);
+  reader->AddVariable("var_b_mult",&b_mult);
+  reader->AddVariable("var_b_deepcsv_bvsall",&b_csv);
+  reader->AddVariable("var_b_deepcsv_cvsb",&b_cvsb);
+  reader->AddVariable("var_b_deepcsv_cvsl",&b_cvsl);
+
+  reader->AddVariable("var_wj1_pt",&wj1_pt);
+  reader->AddVariable("var_wj1_mass",&wj1_mass);
+  reader->AddVariable("var_wj1_ptD",&wj1_ptD);
+  reader->AddVariable("var_wj1_axis1",&wj1_axis1);
+  reader->AddVariable("var_wj1_mult",&wj1_mult);
+  reader->AddVariable("var_wj1_deepcsv_bvsall",&wj1_csv);
+  reader->AddVariable("var_wj1_deepcsv_cvsb",&wj1_cvsb);
+  reader->AddVariable("var_wj1_deepcsv_cvsl",&wj1_cvsl);
+
+  reader->AddVariable("var_wj2_pt",&wj2_pt);
+  reader->AddVariable("var_wj2_mass",&wj2_mass);
+  reader->AddVariable("var_wj2_ptD",&wj2_ptD);
+  reader->AddVariable("var_wj2_axis1",&wj2_axis1);
+  reader->AddVariable("var_wj2_mult",&wj2_mult);
+  reader->AddVariable("var_wj2_deepcsv_bvsall",&wj2_csv);
+  reader->AddVariable("var_wj2_deepcsv_cvsb",&wj2_cvsb);
+  reader->AddVariable("var_wj2_deepcsv_cvsl",&wj2_cvsl);
+
+  reader->AddVariable("var_b_wj1_deltaR",&b_wj1_deltaR);
+  reader->AddVariable("var_b_wj1_mass",&b_wj1_mass);
+  reader->AddVariable("var_b_wj2_deltaR",&b_wj2_deltaR);
+  reader->AddVariable("var_b_wj2_mass",&b_wj2_mass);
+  reader->AddVariable("var_wcand_deltaR",&w_deltaR);
+  reader->AddVariable("var_wcand_mass",&w_mass);
+  reader->AddVariable("var_b_wcand_deltaR",&b_w_deltaR);
+  reader->AddVariable("var_topcand_mass",&top_mass);
+    
+  reader->BookMVA("BDT", "/afs/crc.nd.edu/user/m/mdrnevic/Private/resTop_xgb_csv_order_deepCTag.xml");
   
   ofstream outfile;
   outfile.open(output_file);
@@ -126,7 +170,7 @@ void run_it(TChain* tree, TString output_file)
   int num_bkgd = 0;
   float avg_bkgd = 0;
   for (int i=0; i<treeentries; i++)
-    {
+  {
 
       //printProgress(i,treeentries);
       tree->GetEntry(i);
@@ -181,19 +225,82 @@ void run_it(TChain* tree, TString output_file)
       // Generate all combinations of indices via 3 for loops
       // Every iteration make a vector to compare against matched vectors if there is a fully matched triplet
       // Write the triplet to file
+      vector<int> best_comb = {-1, -1, -1};
+      float best_score = -99;
       for (int i=0; i < size-2; i++) {
         for (int j=i+1; j < size-1; j++) {
           for (int k=j+1; k < size; k++) {
             vector<int> comb = {i, j, k};
-            if (matched1 && (comb == matched_ix[0])) {
-                write_csv(outfile, *preselected_jets_intree, comb);
-            } else if (matched2 && (comb == matched_ix[1])) {
-                write_csv(outfile, *preselected_jets_intree, comb);
+            vector<ttH::Jet> jet_triplet = {(*preselected_jets_intree)[i], (*preselected_jets_intree)[j], (*preselected_jets_intree)[k]};
+            sort(jet_triplet.begin(), jet_triplet.end(), reverse_probb_key());
+            ttH::Jet bjet = jet_triplet.back();
+            jet_triplet.pop_back();
+            sort(jet_triplet.begin(), jet_triplet.end(), pt_key());
+            ttH::Jet wj1 = jet_triplet[0];
+            ttH::Jet wj2 = jet_triplet[1];
+            
+            b_pt = bjet.obj.pt();
+            b_mass = bjet.obj.M();
+            b_csv = bjet.DeepCSVprobb + bjet.DeepCSVprobbb;
+            b_cvsl = bjet.DeepCSVprobc/(bjet.DeepCSVprobc + bjet.DeepCSVprobudsg);
+            b_cvsb = bjet.DeepCSVprobc/(bjet.DeepCSVprobc + bjet.DeepCSVprobb + bjet.DeepCSVprobbb);
+            b_ptD = bjet.ptD;
+            b_axis1 = bjet.axis1;
+            b_mult = bjet.mult;
+              
+            wj1_pt = wj1.obj.pt();
+            wj1_mass = wj1.obj.M();
+            wj1_csv = wj1.DeepCSVprobb + wj1.DeepCSVprobbb;
+            wj1_cvsl = wj1.DeepCSVprobc/(wj1.DeepCSVprobc + wj1.DeepCSVprobudsg);
+            wj1_cvsb = wj1.DeepCSVprobc/(wj1.DeepCSVprobc + wj1.DeepCSVprobb + wj1.DeepCSVprobbb);
+            wj1_ptD = wj1.ptD;
+            wj1_axis1 = wj1.axis1;
+            wj1_mult = wj1.mult;
+              
+            wj2_pt = wj2.obj.pt();
+            wj2_mass = wj2.obj.M();
+            wj2_csv = wj2.DeepCSVprobb + wj2.DeepCSVprobbb;
+            wj2_cvsl = wj2.DeepCSVprobc/(wj2.DeepCSVprobc + wj2.DeepCSVprobudsg);
+            wj2_cvsb = wj2.DeepCSVprobc/(wj2.DeepCSVprobc + wj2.DeepCSVprobb + wj2.DeepCSVprobbb);
+            wj2_ptD = wj2.ptD;
+            wj2_axis1 = wj2.axis1;
+            wj2_mult = wj2.mult;
+              
+            TLorentzVector *tvec1 = new TLorentzVector();
+            TLorentzVector *tvec2 = new TLorentzVector();
+            TLorentzVector *tvec3 = new TLorentzVector();
+            tvec1->SetPtEtaPhiM(bjet.obj.pt(), bjet.obj.eta(), bjet.obj.phi(), bjet.obj.M());
+            tvec2->SetPtEtaPhiM(wj1.obj.pt(), wj1.obj.eta(), wj1.obj.phi(), wj1.obj.M());
+            tvec3->SetPtEtaPhiM(wj2.obj.pt(), wj2.obj.eta(), wj2.obj.phi(), wj2.obj.M());
+            TLorentzVector W = *tvec2 + *tvec3;
+            TLorentzVector top = *tvec1 + *tvec2 + *tvec3;
+              
+            b_wj1_deltaR = deltaR(tvec1->eta(), tvec1->phi(), tvec2->eta(), tvec2->phi());
+            b_wj1_mass = (*tvec1 + *tvec2).M();
+            b_wj2_deltaR = deltaR(tvec1->eta(), tvec1->phi(), tvec3->eta(), tvec3->phi());
+            b_wj2_mass =(*tvec1 + *tvec3).M();
+            w_deltaR = deltaR(tvec2->eta(), tvec2->phi(), tvec3->eta(), tvec3->phi());
+            w_mass = W.M();
+            b_w_deltaR = deltaR(tvec1->eta(), tvec1->phi(), W.eta(), W.phi());
+            top_mass = top.M();
+              
+            float score = reader->EvaluateMVA("BDT");
+            
+            if (score > best_score) {
+                best_score = score;
+                best_comb[0] = i;
+                best_comb[1] = j;
+                best_comb[2] = k;
             }
           }
         }
       }
+    if (matched1 && (best_comb == matched_ix[0])) {
+        correct++;
+    } else if (matched2 && (best_comb == matched_ix[1])) {
+        correct++;
     }
+  }
 
   double endtime = get_wall_time();
   cout << "Elapsed time: " << endtime - starttime << " seconds, " << endl;
@@ -202,6 +309,7 @@ void run_it(TChain* tree, TString output_file)
   cout << "Num Sig: " <<num_signal<< endl;
   cout << "Num Bkgd: " <<num_bkgd<< endl;
   cout << "Avg Bkgd: " <<avg_bkgd<< endl;
+  cout << "Accuracy: " correct(float) / treeentries << endl;
   
   outfile.close();
 }
