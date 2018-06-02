@@ -118,7 +118,7 @@ while current_num_layers < args.layers:
 
 print("Finished Training the SDAE")
 
-anet.eva()
+anet.eval()
 anet.cpu()
 if args.name:
     th.save(anet.state_dict(), "{}_sdae_net.pth".format(args.name))
