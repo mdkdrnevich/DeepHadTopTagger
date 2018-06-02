@@ -67,59 +67,31 @@ criterion = nn.BCELoss()
 optimizer = optim.Adam(dnet.parameters(), lr=args.learning_rate)
 #optimizer = optim.SGD(dnet.parameters(), lr=5e-4, momentum=0.9, nesterov=True)
 scheduler = ReduceLROnPlateau(optimizer, verbose=True)
+training_params = {'cuda': cuda,
+                   'sdae': False,
+                   'scheduler': scheduler}
 
 #if th.cuda.device_count() > 1:
 #  dnet = nn.DataParallel(dnet)
 
+# Define the way to compute the loss and return it
+def cost(model, X, y):
+    outputs = model(X)
+    return criterion(outputs, y)
+
 print("Calculating Initial Loss")
 
-dnet.eval()
-val_curve = [(utils.compute_loss(dnet, trainloader, criterion, cuda=cuda),
-              utils.compute_loss(dnet, validationloader, criterion, cuda=cuda))]
-dnet.train()
+val_curve = [utils.test(dnet, cost, trainloader, validationloader, **training_params)]
 
 print("Training DNN")
 for epoch in range(1, args.epochs+1):
-    count = 0
-    for inputs, targets in trainloader:
-        count += 1
-        print("Epoch {}: {:.2f}%".format(epoch, round(count*100/num_batches, 2)), end='\r')
-        
-        inputs, targets = Variable(inputs), Variable(targets)
-        if cuda:
-            inputs = inputs.cuda()
-            targets = targets.cuda()
-        optimizer.zero_grad()
-        
-        outputs = dnet(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-    
-    # Add the points to the loss curve
-    dnet.eval()
-    train_loss = utils.compute_loss(dnet, trainloader, criterion, cuda=cuda)
-    val_loss = utils.compute_loss(dnet, validationloader, criterion, cuda=cuda)
-    val_curve.append((train_loss, val_loss))
-    dnet.train()
-    scheduler.step(val_loss)
-    print()
+    utils.train(dnet, cost, optimizer, trainloader, **training_params)
+    losses = utils.test(dnet, cost, trainloader, validationloader, **training_params)
+    val_curve.append(losses)
 print("Done")
 
 # Plot the training & validation curves for each epoch
-fig, ax = plt.subplots()
-plt.plot(range(len(val_curve)), val_curve)
-ax.set_ylabel("BCE Loss")
-ax.set_xlabel("Epochs Finished")
-ax.set_title("Validation Curves")
-# Get the default colors
-colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-# Build legend entries
-train_patch = mpatches.Patch(color=colors[0], label='Training')
-val_patch = mpatches.Patch(color=colors[1], label='Validation')
-# Construct the legend
-plt.legend(handles=[train_patch, val_patch], loc='lower right')
-fig.set_size_inches(18, 10)
+fig = utils.plot_curves(val_curve, title='Validation Curves')
 
 dnet.eval()
 dnet.cpu()
