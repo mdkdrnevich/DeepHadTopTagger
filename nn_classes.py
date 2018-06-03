@@ -14,7 +14,7 @@ except NameError:
         
 class ShortDHTTNet(nn.Module):
     def __init__(self, input_dim, width, dropout=0.5):
-        super(DHTTNet, self).__init__()
+        super(ShortDHTTNet, self).__init__()
         self.width = width
         self.p_drop = dropout
         # Layers
