@@ -11,6 +11,46 @@ try:
 except NameError:
     xrange = range
             
+        
+class ShortDHTTNet(nn.Module):
+    def __init__(self, input_dim, width, dropout=0.5):
+        super(DHTTNet, self).__init__()
+        self.width = width
+        self.p_drop = dropout
+        # Layers
+        #  - Linear
+        #  - Activation
+        #  - Batch Normalization
+        #  - Dropout
+        self.lin1 = nn.Linear(input_dim, input_dim*width)
+        self.f1 = nn.PReLU()
+        self.norm1 = nn.BatchNorm1d(input_dim*width)
+        #
+        self.lin2 = nn.Linear(input_dim*width, input_dim*width)
+        self.f2 = nn.PReLU()
+        self.norm2 = nn.BatchNorm1d(input_dim*width)
+        #
+        self.lin3 = nn.Linear(input_dim*width, input_dim*width)
+        self.f3 = nn.PReLU()
+        self.norm3 = nn.BatchNorm1d(input_dim*width)
+        #
+        self.lin4 = nn.Linear(input_dim*width, input_dim*width)
+        self.f4 = nn.PReLU()
+        self.norm4 = nn.BatchNorm1d(input_dim*width)
+        #
+        self.lin5 = nn.Linear(input_dim*width, 1)
+        # Dropout Layer
+        self.dropout = nn.Dropout(dropout)
+        
+
+    def forward(self, x):
+        x = self.dropout(self.norm1(self.f1(self.lin1(x))))
+        x = self.dropout(self.norm2(self.f2(self.lin2(x))))
+        x = self.dropout(self.norm3(self.f3(self.lin3(x))))
+        x = self.dropout(self.norm4(self.f4(self.lin4(x))))
+        x = F.sigmoid(self.lin5(x))
+        return x
+    
     
 class DHTTNet(nn.Module):
     def __init__(self, input_dim, width):
