@@ -10,6 +10,41 @@ try:
     xrange
 except NameError:
     xrange = range
+    
+    
+class DeepBinClassifier(nn.Module):
+    def __init__(self, input_dim, num_layers, width, dropout=0.3):
+        super(DeepBinClassifier, self).__init__()
+        self.num_layers = num_layers
+        self.width = width
+        self.p_drop = dropout
+        # Layers
+        #  - Linear
+        #  - Activation
+        #  - Batch Normalization
+        #  - Dropout
+        self.linear_layers = nn.ModuleList()
+        self.activation_layers = nn.ModuleList()
+        self.norm_layers = nn.ModuleList()
+        # Add the first hidden layer
+        self.linear_layers.append(nn.Linear(input_dim, input_dim*width))
+        self.activation_layers.append(nn.PReLU())
+        self.norm_layers.append(nn.BatchNorm1d(input_dim*width))
+        # Add the rest
+        for i in range(num_layers-1):
+            self.linear_layers.append(nn.Linear(input_dim*width, input_dim*width))
+            self.activation_layers.append(nn.PReLU())
+            self.norm_layers.append(nn.BatchNorm1d(input_dim*width))
+        # Output Layer
+        self.output_layer = nn.Linear(input_dim*width, 1)
+        # Dropout Layer
+        self.dropout = nn.Dropout(dropout)
+        
+        
+    def forward(self, x):    
+        for i in range(self.num_layers):
+            x = self.dropout(self.norm_layers[i](self.activation_layers[i](self.linear_layers[i](x))))
+        return F.sigmoid(self.output_layer(x))
             
         
 class ShortDHTTNet(nn.Module):
