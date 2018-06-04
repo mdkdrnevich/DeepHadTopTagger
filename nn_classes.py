@@ -24,19 +24,19 @@ class ShortDHTTNet(nn.Module):
         #  - Dropout
         self.lin1 = nn.Linear(input_dim, input_dim*width)
         self.f1 = nn.PReLU()
-        self.norm1 = nn.BatchNorm1d(input_dim*width)
+        self.norm1 = nn.BatchNorm1d()
         #
         self.lin2 = nn.Linear(input_dim*width, input_dim*width)
         self.f2 = nn.PReLU()
-        self.norm2 = nn.BatchNorm1d(input_dim*width)
+        self.norm2 = nn.BatchNorm1d()
         #
         self.lin3 = nn.Linear(input_dim*width, input_dim*width)
         self.f3 = nn.PReLU()
-        self.norm3 = nn.BatchNorm1d(input_dim*width)
+        self.norm3 = nn.BatchNorm1d()
         #
         self.lin4 = nn.Linear(input_dim*width, input_dim*width)
         self.f4 = nn.PReLU()
-        self.norm4 = nn.BatchNorm1d(input_dim*width)
+        self.norm4 = nn.BatchNorm1d()
         #
         self.lin5 = nn.Linear(input_dim*width, 1)
         # Dropout Layer
