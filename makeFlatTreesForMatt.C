@@ -23,8 +23,7 @@
 #include "TCanvas.h"
 #include "TH2I.h"
 #include "DataFormats/Math/interface/deltaR.h"
-#include <filesystem>
-namespace fs = std::filesystem;
+#include <dirent.h>
 
 /////////////////////////////////////////
 ///
@@ -231,10 +230,15 @@ void makeFlatTreesForMatt(TString sample="")
   
   sample = "ttH";
   TString output_file = output_dir + sample + "_DeepLearningTree" + ".root";
-  TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");  
-  std::string path = "/scratch365/mdrnevic/trees";
-  for (auto & p : fs::directory_iterator(path))
-      tth_chain->Add((TString) p);
+  TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");
+    
+  DIR *dir;
+  struct dirent *ent;
+  dir = opendir ("/scratch365/mdrnevic/trees");
+  while ((ent = readdir (dir)) != NULL) {
+      tth_chain->Add((TString) ent->d_name);
+  }
+  closedir (dir);
   /*for (int i=0; i<7; i++) {
     tth_chain->Add(input_files[i]);
   }*/
