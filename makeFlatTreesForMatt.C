@@ -232,7 +232,7 @@ void makeFlatTreesForMatt(TString sample="")
   sample = "ttH";
   TString output_file = output_dir + sample + "_DeepLearningTree" + ".root";
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");  
-  std::string path = "./trees";
+  std::string path = "/scratch365/mdrnevic/trees";
   for (auto & p : fs::directory_iterator(path))
       tth_chain->Add((TString) p);
   /*for (int i=0; i<7; i++) {
