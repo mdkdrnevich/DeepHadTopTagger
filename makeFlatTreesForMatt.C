@@ -23,6 +23,8 @@
 #include "TCanvas.h"
 #include "TH2I.h"
 #include "DataFormats/Math/interface/deltaR.h"
+#include <filesystem>
+namespace fs = std::filesystem;
 
 /////////////////////////////////////////
 ///
@@ -221,18 +223,21 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
 void makeFlatTreesForMatt(TString sample="")
 {
 
-  TString output_dir = "";
-  TString input_files[7] = {"trees/output_tree_15290.root", "trees/output_tree_18889.root",
+  TString output_dir = "";      
+  /*TString input_files[7] = {"trees/output_tree_15290.root", "trees/output_tree_18889.root",
                             "trees/output_tree_25083.root", "trees/output_tree_21531.root",
                             "trees/output_tree_18046.root", "trees/output_tree_69439.root",
-                            "trees/output_tree_39898.root"};
+                            "trees/output_tree_39898.root"};*/
   
   sample = "ttH";
   TString output_file = output_dir + sample + "_DeepLearningTree" + ".root";
-  TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");    
-  for (int i=0; i<7; i++) {
+  TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");  
+  std::string path = "./trees";
+  for (auto & p : fs::directory_iterator(path))
+      tth_chain->Add((TString) p);
+  /*for (int i=0; i<7; i++) {
     tth_chain->Add(input_files[i]);
-  }
+  }*/
 
   TString sorted_file_csv = output_dir + sample + "_Signal_DeepLearningTree.csv";
   TString bkgd_file_csv = output_dir + sample + "_Background_DeepLearningTree.csv";
