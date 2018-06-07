@@ -80,11 +80,11 @@ print("Finished loading files. The smallest file after Top Mass cuts was {}".for
 # Save the Datasets as Training, Validation, and Testing Sets to Facilitate Easy Use in PyTorch and Scikit Learn
 # I ensure that there is an equal amount of each class in each set
 # Dataset Fractions:
-# - Training: 65%
+# - Training: 70%
 # - Validation: 15%
-# - Testing: 20%
+# - Testing: 15%
 
-ix_train_cut = int(0.6*smallest)
+ix_train_cut = int(0.7*smallest)
 ix_val_cut = ix_train_cut + int(0.15*smallest)
 
 sig_scale = len(bkgd_files)/len(signal_files) if len(signal_files) > len(bkgd_files) else 1
