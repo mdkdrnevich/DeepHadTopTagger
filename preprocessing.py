@@ -36,7 +36,7 @@ else:
 RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
     [[n.format(i) for n in 
       ["Pt {}", "Eta {}", "Phi {}", "Mass {}", "Charge {}", "DeepCSVprobb {}", "DeepCSVprobbb {}", "DeepCSVprobc {}",
-       "DeepCSVprobudsg {}", "qgid {}"]]
+       "DeepCSVprobudsg {}", "qgid {}", "ptD {}", "axis1 {}", "mult {}"]]
      for i in range(1, 4)]))
 
 HEADER = RAW_HEADER + ["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",

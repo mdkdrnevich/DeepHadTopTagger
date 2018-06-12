@@ -72,6 +72,7 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, 
       in_file<< jet.charge <<","<< jet.DeepCSVprobb <<","<< jet.DeepCSVprobbb <<",";
       in_file<< jet.DeepCSVprobc <<","<< jet.DeepCSVprobudsg <<",";
       in_file<< jet.qgid <<",";
+      in_file<< jet.ptD <<","<< jet.axis1 <<","<< jet.mult <<",";
     }
   in_file<< top_mass <<","<< top.Pt() <<","<< top_ptDR <<","<< W_mass <<","<< W_ptDR <<","<< soft_drop;
   in_file<< ","<< q2_ptd <<","<< q3_ptd <<","<< b_q2_m <<","<< b_q3_m;
