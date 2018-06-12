@@ -79,7 +79,8 @@ class CollisionDataset(Dataset):
         
         
     def _remerge(self):
-        return np.concatenate((self._tY.view(-1, 1).numpy(), self._transform(self._tX.numpy(), inverse=True)), axis=1)
+        return np.concatenate((self._tY.contiguous().view(-1, 1).numpy(),
+                               self._transform(self._tX.numpy(), inverse=True)), axis=1)
     
     
     @property

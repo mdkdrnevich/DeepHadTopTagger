@@ -237,7 +237,7 @@ void makeFlatTreesForMatt(TString sample="")
   struct dirent *ent;
   dir = opendir ("/scratch365/mdrnevic/trees");
   while ((ent = readdir (dir)) != NULL) {
-      tth_chain->Add((TString) ent->d_name);
+      tth_chain->Add("/scratch365/mdrnevic/trees/" + (TString) ent->d_name);
   }
   closedir (dir);
   /*for (int i=0; i<7; i++) {
