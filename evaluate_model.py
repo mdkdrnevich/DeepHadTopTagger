@@ -8,6 +8,7 @@ from torch.autograd import Variable
 from sklearn.metrics import roc_curve, roc_auc_score, classification_report, confusion_matrix, f1_score
 import utils
 import nn_classes
+import itertools
 
 RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
     [[n.format(i) for n in 
