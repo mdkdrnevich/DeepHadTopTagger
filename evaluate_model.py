@@ -15,6 +15,7 @@ RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
       ["Pt {}", "Eta {}", "Phi {}", "Mass {}", "Charge {}", "DeepCSVprobb {}", "DeepCSVprobbb {}", "DeepCSVprobc {}",
        "DeepCSVprobudsg {}", "qgid {}", "ptD {}", "axis1 {}", "mult {}"]]
      for i in range(1, 17)]))
+JETSIZE = 13
 
 df = pd.read_csv("/afs/crc.nd.edu/user/m/mdrnevic/scratch/ttH_triplets_bdt.csv", names=RAW_HEADER, index_col=None)
 dataset = df.as_matrix()
@@ -24,7 +25,7 @@ for i in xrange(dataset.shape[0]):
 params = np.load("new_vars_standardizer.npz")
 mu, sig = (params["mean"].astype("float32"), params["std"].astype("float32"))
 
-net = nn_classes.DeepBinClassifier(33, 4, 20).eval()
+net = nn_classes.DeepBinClassifier(39, 4, 20).eval()
 net.load_state_dict(th.load("new_vars_net.pth"))
 
 total = 0
@@ -34,14 +35,14 @@ for m in xrange(dataset.shape[0]):
     line = dataset[m, 1:].astype(np.float32)
     good = dataset[m, 0]
     line = line[~np.isnan(line)]
-    if len(line)%10 != 0: raise Exception("Event data is not a valid shape! It is {}".format(len(line)))
-    num_jets = len(line)//10
+    if len(line)%JETSIZE != 0: raise Exception("Event data is not a valid shape! It is {}".format(len(line)))
+    num_jets = len(line)//JETSIZE
     best_score = 0
     best_triplet = (-1, -1, -1)
     for i in xrange(num_jets - 2):
         for j in xrange(i+1, num_jets - 1):
             for k in xrange(j+1, num_jets):
-                triplet = [line[i*10:(i+1)*10], line[j*10:(j+1)*10], line[k*10:(k+1)*10]] # Get three jets
+                triplet = [line[i*10:(i+1)*JETSIZE], line[j*JETSIZE:(j+1)*JETSIZE], line[k*JETSIZE:(k+1)*JETSIZE]] # Get three jets
                 triplet = list(reversed(sorted(triplet, key=lambda x: x[5]+x[6])))
                 triplet = np.concatenate(triplet)
                 triplet = (triplet - mu)/sig
