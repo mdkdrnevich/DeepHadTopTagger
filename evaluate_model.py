@@ -17,15 +17,14 @@ RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
 
 df = pd.read_csv("/afs/crc.nd.edu/user/m/mdrnevic/scratch/ttH_triplets_bdt.csv", names=RAW_HEADER, index_col=None)
 dataset = df.as_matrix()
-dataset = np.load("/afs/crc.nd.edu/user/m/mdrnevic/scratch/ttH_triplets_bdt.npy")
 for i in xrange(dataset.shape[0]):
     dataset[i, 0] = np.array([int(x) for x in dataset[i,0].split('.')])
 
-params = np.load("all_standardizer.npz")
+params = np.load("new_vars_standardizer.npz")
 mu, sig = (params["mean"].astype("float32"), params["std"].astype("float32"))
 
-net = nn_classes.DHTTNet(30, 20).eval()
-net.load_state_dict(th.load("deep_net.pth"))
+net = nn_classes.DeepBinClassifier(33, 4, 20).eval()
+net.load_state_dict(th.load("new_vars_net.pth"))
 
 total = 0
 what_to_do = 0
