@@ -57,6 +57,7 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, vector<int> ind
       in_file<< jet.charge <<","<< jet.DeepCSVprobb <<","<< jet.DeepCSVprobbb <<",";
       in_file<< jet.DeepCSVprobc <<","<< jet.DeepCSVprobudsg <<",";
       in_file<< jet.qgid <<",";
+      in_file<< jet.ptD <<","<< jet.axis1 <<","<< jet.mult <<",";
     }
   
   in_file<<"\n";
@@ -203,17 +204,17 @@ void makeTagTripletsSet(TString sample="")
 {
 
   TString output_dir = "";
-  TString input_files[7] = {"trees/output_tree_15290.root", "trees/output_tree_18889.root",
-                            "trees/output_tree_25083.root", "trees/output_tree_21531.root",
-                            "trees/output_tree_18046.root", "trees/output_tree_69439.root",
-                            "trees/output_tree_39898.root"};
   
   sample = "ttH";
   TString output_file = output_dir + sample + "_triplets.csv";
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");    
-  for (int i=0; i<7; i++) {
-    tth_chain->Add(input_files[i]);
+  DIR *dir;
+  struct dirent *ent;
+  dir = opendir ("/scratch365/mdrnevic/trees/testing");
+  while ((ent = readdir (dir)) != NULL) {
+      tth_chain->Add("/scratch365/mdrnevic/trees/testing/" + (TString) ent->d_name);
   }
+  closedir (dir);
 
   run_it(tth_chain, output_file);
 

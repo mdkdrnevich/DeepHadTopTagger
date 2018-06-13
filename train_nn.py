@@ -32,7 +32,8 @@ parser.add_argument("validation", help="File path to the validation set")
 parser.add_argument("-b", "--batch-size", help="Batch size", default=2048, type=int)
 parser.add_argument("-e", "--epochs", help="Number of epochs", default=10, type=int)
 parser.add_argument("-n", "--name", help="Name to help describe the output neural net and standardizer")
-parser.add_argument("-l", "--learning-rate", help="What the initial learning rate should be", default=1e3, type=float)
+parser.add_argument("-a", "--learning-rate", help="What the initial learning rate should be", default=1e3, type=float)
+parser.add_argument("-l", "--layers", help="Number of hidden layers in the DNN", default=4, type=int)
 parser.add_argument("-w", "--width", help="Width of the hidden layers in the DNN", default=15, type=int)
 parser.add_argument("-d", "--dropout", help="Percentage for dropout", default=0.3, type=float)
 args = parser.parse_args()
@@ -61,7 +62,7 @@ input_dim = trainset.shape[1]
 
 # # Deep Neural Network on the Basic Features
 
-dnet = ShortDHTTNet(input_dim, args.width, dropout=args.dropout)
+dnet = DeepBinClassifier(input_dim, args.layers, args.width, dropout=args.dropout)
 if cuda: dnet.cuda()
 
 criterion = nn.BCELoss()
