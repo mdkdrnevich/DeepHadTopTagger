@@ -43,7 +43,7 @@ for m in xrange(dataset.shape[0]):
         for j in xrange(i+1, num_jets - 1):
             for k in xrange(j+1, num_jets):
                 triplet = [line[i*JETSIZE:(i+1)*JETSIZE], line[j*JETSIZE:(j+1)*JETSIZE], line[k*JETSIZE:(k+1)*JETSIZE]] # Get three jets
-                triplet = list(reversed(sorted(triplet, key=lambda x: x[5]+x[6])))
+                triplet = list(sorted(triplet, key=lambda x: x[5]+x[6]))
                 triplet = np.concatenate(triplet)
                 triplet = (triplet - mu)/sig
                 triplet = Variable(th.from_numpy(triplet)).view(1, -1)
