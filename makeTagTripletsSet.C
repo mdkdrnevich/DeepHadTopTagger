@@ -207,13 +207,13 @@ void makeTagTripletsSet(TString sample="")
   TString output_dir = "";
   
   sample = "ttH";
-  TString output_file = output_dir + sample + "_triplets.csv";
+  TString output_file = output_dir + sample + "_triplets_bdt.csv";
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");    
   DIR *dir;
   struct dirent *ent;
-  dir = opendir ("/scratch365/mdrnevic/trees/testing");
+  dir = opendir ("/scratch365/mdrnevic/trees/testing/ttH");
   while ((ent = readdir (dir)) != NULL) {
-      tth_chain->Add("/scratch365/mdrnevic/trees/testing/" + (TString) ent->d_name);
+      tth_chain->Add("/scratch365/mdrnevic/trees/testing/ttH/" + (TString) ent->d_name);
   }
   closedir (dir);
 
