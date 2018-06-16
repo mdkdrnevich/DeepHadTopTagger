@@ -31,11 +31,13 @@
 ///
 /////////////////////////////////////////
 
+
+// Sorts from high to low b-jet probability
 struct reverse_probb_key
 {
     inline bool operator() (const ttH::Jet& struct1, const ttH::Jet& struct2)
     {
-        return ((struct1.DeepCSVprobb + struct1.DeepCSVprobbb) > (struct2.DeepCSVprobb + struct2.DeepCSVprobbb));
+        return ((struct1.DeepCSVprobb + struct1.DeepCSVprobbb) < (struct2.DeepCSVprobb + struct2.DeepCSVprobbb));
     }
 };
 
@@ -43,7 +45,7 @@ struct pt_key
 {
     inline bool operator() (const ttH::Jet& struct1, const ttH::Jet& struct2)
     {
-        return (struct1.obj.pt() < struct2.obj.pt());
+        return (struct1.obj.pt() > struct2.obj.pt());
     }
 };
 
