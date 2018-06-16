@@ -49,7 +49,7 @@ struct pt_key
     }
 };
 
-void run_it(TChain* tree, TString output_file)
+void run_it(TChain* tree)
 {
 
   //int num_hadronic = 0;
@@ -159,9 +159,6 @@ void run_it(TChain* tree, TString output_file)
     
   reader->BookMVA("BDT", "/afs/crc.nd.edu/user/m/mdrnevic/Private/resTop_xgb_csv_order_deepCTag.xml");
   
-  ofstream outfile;
-  outfile.open(output_file);
-
   Int_t cachesize = 500000000;   //500 MBytes
   tree->SetCacheSize(cachesize);
   tree->SetCacheLearnEntries(20); 
@@ -318,21 +315,11 @@ void run_it(TChain* tree, TString output_file)
   cout << "Elapsed time: " << endtime - starttime << " seconds, " << endl;
   if (treeentries>0) cout << "an average of " << (endtime - starttime) / treeentries << " per event." << endl;
   cout << "Number that passed selection: " <<passed_selection<< endl;
-  cout << "Num Sig: " <<num_signal<< endl;
-  cout << "Num Bkgd: " <<num_bkgd<< endl;
-  cout << "Avg Bkgd: " <<avg_bkgd<< endl;
   cout << "Accuracy: " << (float) correct / passed_selection << endl;
-  
-  outfile.close();
 }
 
 void evaluateBDT(TString sample="")
-{
-
-  TString output_dir = "";
-  
-  sample = "ttH";
-  TString output_file = output_dir + sample + "_triplets.csv";
+{  
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");    
   DIR *dir;
   struct dirent *ent;
@@ -342,6 +329,6 @@ void evaluateBDT(TString sample="")
   }
   closedir (dir);
 
-  run_it(tth_chain, output_file);
+  run_it(tth_chain);
 
 }
