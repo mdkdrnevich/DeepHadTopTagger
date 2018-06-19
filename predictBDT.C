@@ -61,15 +61,14 @@ void run_it(TChain* tree, TString prediction_filename)
   int lumiBlock_intree = -999;
   int runNumber_intree = -999;
   
-  Int_t *class = 0;
+  Int_t tree_class = 0;
   ttH::Jet *tree_jet1 = 0;
   ttH::Jet *tree_jet2 = 0;
   ttH::Jet *tree_jet3 = 0;
-  vector<ttH::Jet> *preselected_jets_intree=0;
   
   tree->SetBranchStatus("*",1);
 
-  tree->SetBranchAddress("class", &class);
+  tree->SetBranchAddress("class", &tree_class);
   tree->SetBranchAddress("jet1", &tree_jet1);
   tree->SetBranchAddress("jet2", &tree_jet2);
   tree->SetBranchAddress("jet3", &tree_jet3);
@@ -218,11 +217,11 @@ void run_it(TChain* tree, TString prediction_filename)
               
         float score = reader->EvaluateMVA("BDT");
       
-        prediction_file << *class <<","<< score <<"\n";
+        prediction_file << tree_class <<","<< score <<"\n";
         prediction_file.flush();
   }
 
-  prediction_file.close()
+  prediction_file.close();
   double endtime = get_wall_time();
   cout << "Elapsed time: " << endtime - starttime << " seconds, " << endl;
   if (treeentries>0) cout << "an average of " << (endtime - starttime) / treeentries << " per event." << endl;
