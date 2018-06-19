@@ -101,46 +101,62 @@ for ix, dset in enumerate(cut_signals):
     dset.shuffle()
     if args.test:
             name = ospath.splitext(signal_files[ix])[0] + "_test.npy"
-            dset.slice(ix_val_cut, ix_test_cut).saveas(name)
+            if (ix_test_cut - ix_val_cut) > 0:
+                dset.slice(ix_val_cut, ix_test_cut).saveas(name)
     if ix == 0:
-        total_train_signal = dset.slice(0, int(ix_train_cut * sig_scale))
-        total_val_signal = dset.slice(int(ix_train_cut * sig_scale), int(ix_val_cut * sig_scale))
-        total_test_signal = dset.slice(int(ix_val_cut * sig_scale), int(ix_test_cut * sig_scale))
+        if ix_train_cut > 0:
+            total_train_signal = dset.slice(0, int(ix_train_cut * sig_scale))
+        if (ix_val_cut - ix_train_cut) > 0:
+            total_val_signal = dset.slice(int(ix_train_cut * sig_scale), int(ix_val_cut * sig_scale))
+        if (ix_test_cut - ix_val_cut) > 0:
+            total_test_signal = dset.slice(int(ix_val_cut * sig_scale), int(ix_test_cut * sig_scale))
     else:
-        total_train_signal = total_train_signal + dset.slice(0, int(ix_train_cut * sig_scale))
-        total_val_signal = total_val_signal + dset.slice(int(ix_train_cut * sig_scale), int(ix_val_cut * sig_scale))
-        total_test_signal = total_test_signal + dset.slice(int(ix_val_cut * sig_scale), int(ix_test_cut * sig_scale))
+        if ix_train_cut > 0:
+            total_train_signal = total_train_signal + dset.slice(0, int(ix_train_cut * sig_scale))
+        if (ix_val_cut - ix_train_cut) > 0:
+            total_val_signal = total_val_signal + dset.slice(int(ix_train_cut * sig_scale), int(ix_val_cut * sig_scale))
+        if (ix_test_cut - ix_val_cut) > 0:
+            total_test_signal = total_test_signal + dset.slice(int(ix_val_cut * sig_scale), int(ix_test_cut * sig_scale))
         
 for ix, dset in enumerate(cut_bkgds):
     dset.subsample(smallest)
     dset.shuffle()
     if args.test:
             name = ospath.splitext(bkgd_files[ix])[0] + "_test.npy"
-            dset.slice(ix_val_cut, ix_test_cut).saveas(name)
+            if (ix_test_cut - ix_val_cut) > 0:
+                dset.slice(ix_val_cut, ix_test_cut).saveas(name)
     if ix == 0:
-        total_train_bkgd = dset.slice(0, int(ix_train_cut * bkgd_scale))
-        total_val_bkgd = dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
-        total_test_bkgd = dset.slice(int(ix_val_cut * bkgd_scale), int(ix_test_cut * bkgd_scale))
+        if ix_train_cut > 0:
+            total_train_bkgd = dset.slice(0, int(ix_train_cut * bkgd_scale))
+        if (ix_val_cut - ix_train_cut) > 0:
+            total_val_bkgd = dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
+        if (ix_test_cut - ix_val_cut) > 0:
+            total_test_bkgd = dset.slice(int(ix_val_cut * bkgd_scale), int(ix_test_cut * bkgd_scale))
     else:
-        total_train_bkgd = total_train_bkgd + dset.slice(0, int(ix_train_cut * bkgd_scale))
-        total_val_bkgd = total_val_bkgd + dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
-        total_test_bkgd = total_test_bkgd + dset.slice(int(ix_val_cut * bkgd_scale), int(ix_test_cut * bkgd_scale))
+        if ix_train_cut > 0:
+            total_train_bkgd = total_train_bkgd + dset.slice(0, int(ix_train_cut * bkgd_scale))
+        if (ix_val_cut - ix_train_cut) > 0:
+            total_val_bkgd = total_val_bkgd + dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
+        if (ix_test_cut - ix_val_cut) > 0:
+            total_test_bkgd = total_test_bkgd + dset.slice(int(ix_val_cut * bkgd_scale), int(ix_test_cut * bkgd_scale))
         
 print("Saving datasets")
 
-train = total_train_signal + total_train_bkgd
-val = total_val_signal + total_val_bkgd
-test = total_test_signal + total_test_bkgd
-
-train.shuffle()
-val.shuffle()
-test.shuffle()
-
-if not args.exclude:
-    train.saveas(args.name + "training_set.npy")
-    val.saveas(args.name + "validation_set.npy")
-    test.saveas(args.name + "testing_set.npy")
-
-train.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "training_basic_set.npy")
-val.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "validation_basic_set.npy")
-test.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "testing_basic_set.npy")
+if ix_train_cut > 0:
+    train = total_train_signal + total_train_bkgd
+    train.shuffle()
+    if not args.exclude:
+        train.saveas(args.name + "training_set.npy")
+    train.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "training_basic_set.npy")
+if (ix_val_cut - ix_train_cut) > 0:
+    val = total_val_signal + total_val_bkgd
+    val.shuffle()
+    if not args.exclude:
+        val.saveas(args.name + "validation_set.npy")
+    val.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "validation_basic_set.npy")
+if (ix_test_cut - ix_val_cut) > 0:
+    test = total_test_signal + total_test_bkgd
+    test.shuffle()
+    if not args.exclude:
+        test.saveas(args.name + "testing_set.npy")
+    test.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "testing_basic_set.npy")
