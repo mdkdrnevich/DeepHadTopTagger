@@ -81,7 +81,7 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, 
   in_file.flush();
 }
 
-void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd_file, bool signal, bool background)
+void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd_file, bool signal, bool background, bool selection)
 {
 
   //int num_hadronic = 0;
@@ -113,8 +113,8 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
   tree->SetBranchAddress("preselected_jets", &preselected_jets_intree);
   tree->SetBranchAddress("pruned_genParticles", &gen_parts);
 
-  //TFile *copiedfile = new TFile(output_file, "RECREATE"); //"UPDATE"); // #, 'test' ) // "RECREATE");
-  //copiedfile->cd();
+  TFile *outfile = new TFile(output_file, "RECREATE"); //"UPDATE"); // #, 'test' ) // "RECREATE");
+  outfile->cd();
   
   ofstream signal_sorted_file;
   ofstream bkgd_sorted_file;
@@ -122,8 +122,15 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
   signal_sorted_file.open(sorted_file);
   bkgd_sorted_file.open(bkgd_file);
 
-  //TTree *summary_tree = (TTree*)tree->CloneTree(0);
-  //summary_tree->SetName("ss2l_tree");
+  Int_t tree_class = 0;
+  ttH::Jet tree_jet1;
+  ttH::Jet tree_jet2;
+  ttH::Jet tree_jet3;
+  TTree tripletree("tripleTree", "Tree of triples of jets");
+  tripletree.Branch("class", &tree_class);
+  tripletree.Branch("jet1", &tree_jet1);
+  tripletree.Branch("jet2", &tree_jet2);
+  tripletree.Branch("jet3", &tree_jet3);
   Int_t cachesize = 500000000;   //500 MBytes
   tree->SetCacheSize(cachesize);
   tree->SetCacheLearnEntries(20); 
@@ -148,17 +155,23 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
       vector<int> matched_ix[2] = {vector<int>(), vector<int>()};
       vector<ttH::Jet> unmatched_jets;
       int ix = 0;
+      int num_pos_lept = 0;
+      int num_neg_lept = 0;
+      bool tau_lept = false;
       for (const auto &pjet : *preselected_jets_intree) {
-        if (pjet.genPdgID == 5 && pjet.genMotherPdgID == 6) {
+        int ID = pjet.genPdgID;
+        int mID = pjet.genMotherPdgID;
+        int gmID = pjet.genGrandMotherPdgID;
+        if (ID == 5 && mID == 6) {
           matched_jets[0].insert(matched_jets[0].begin(), pjet);
           matched_ix[0].push_back(ix);
-        } else if (pjet.genPdgID == -5 && pjet.genMotherPdgID == -6) {
+        } else if (ID == -5 && mID == -6) {
           matched_jets[1].insert(matched_jets[1].begin(), pjet);
           matched_ix[1].push_back(ix);
-        } else if (pjet.genMotherPdgID == 24 && pjet.genGrandMotherPdgID == 6) {
+        } else if (mID == 24 && gmID == 6) {
           matched_jets[0].push_back(pjet);
           matched_ix[0].push_back(ix);
-        } else if (pjet.genMotherPdgID == -24 && pjet.genGrandMotherPdgID == -6) {
+        } else if (mID == -24 && gmID == -6) {
           matched_jets[1].push_back(pjet);
           matched_ix[1].push_back(ix);
         } else {
@@ -167,23 +180,56 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
         ix++;
       }
       
+      for (const auto &gjet : *gen_parts) {
+        int ID = gjet.pdgID;
+        bool mother = (gjet.mother != 9999);
+        bool grandmother = (gjet.grandmother != 9999);
+        int mID = mother ? (*gen_parts)[gjet.mother].pdgID : 0;
+        int gmID = grandmother ? (*gen_parts)[gjet.grandmother].pdgID : 0;
+        if (abs(ID) == 15) {
+          tau_lept = true;
+        } else if (ID >= 11 && ID <= 16 && (mID == 24 || gmID == 24)) {
+          num_pos_lept++;
+        } else if (ID <= -11 && ID >= -16 && (mID == -24 || gmID == -24)) {
+          num_neg_lept++;
+        }
+      }
+      
+      int size = preselected_jets_intree->size();
+      if (selection) {
+          // Make sure there's only one hadronic top
+          bool matched1 = (matched_jets[0].size() == 3);
+          bool matched2 = (matched_jets[1].size() == 3);
+          if ((!matched1 == !matched2) || ((num_pos_lept < 2) == (num_neg_lept < 2)) || !tau_lept)
+            continue;
+      }
+      
       //write csv files
       if (signal) {
+        tree_class = 1;
         if (matched_jets[0].size() == 3) {
           num_signal++;
           write_csv(signal_sorted_file, matched_jets[0], eventnum_intree, 1);
+          tree_jet1 = matched_jets[0][0];
+          tree_jet2 = matched_jets[0][1];
+          tree_jet3 = matched_jets[0][2];
+          tripletree.Fill();
         }
         if (matched_jets[1].size() == 3) {
           num_signal++;
           write_csv(signal_sorted_file, matched_jets[1], eventnum_intree, 1);
+          tree_jet1 = matched_jets[1][0];
+          tree_jet2 = matched_jets[1][1];
+          tree_jet3 = matched_jets[1][2];
+          tripletree.Fill();
         }
       } 
       if (background) {
+         tree_class = 0;
          int this_bkgd = 0;
          // Generate all combinations of indices via 3 for loops
          // Every iteration make a vector to compare against matched vectors if there is a fully matched triplet
          // Write the triplet to file
-         int size = preselected_jets_intree->size();
          bool matched1 = (matched_jets[0].size() == 3);
          bool matched2 = (matched_jets[1].size() == 3);
          for (int i=0; i < size-2; i++) {
@@ -198,13 +244,15 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
                num_bkgd++;
                this_bkgd++;
                write_csv(bkgd_sorted_file, bkgd_jets, eventnum_intree, 0);
+               tree_jet1 = bkgd_jets[0];
+               tree_jet2 = bkgd_jets[1];
+               tree_jet3 = bkgd_jets[2];
+               tripletree.Fill();
              }
            }
          }
          avg_bkgd = (avg_bkgd + this_bkgd)/2;
       }
-
-      //summary_tree->Fill();
     }
 
   double endtime = get_wall_time();
@@ -214,8 +262,8 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
   cout << "Num Bkgd: " <<num_bkgd<< endl;
   cout << "Avg Bkgd: " <<avg_bkgd<< endl;
   
-  //summary_tree->Write();
-  //copiedfile->Close();
+  tripletree->Write();
+  outfile->Close();
   signal_sorted_file.close();
   bkgd_sorted_file.close();
 }
@@ -223,12 +271,7 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
 void makeFlatTreesForMatt(TString sample="")
 {
 
-  TString output_dir = "";      
-  /*TString input_files[7] = {"trees/output_tree_15290.root", "trees/output_tree_18889.root",
-                            "trees/output_tree_25083.root", "trees/output_tree_21531.root",
-                            "trees/output_tree_18046.root", "trees/output_tree_69439.root",
-                            "trees/output_tree_39898.root"};*/
-  
+  TString output_dir = "";
   sample = "ttH";
   TString output_file = output_dir + sample + "_DeepLearningTree" + ".root";
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");
@@ -240,13 +283,13 @@ void makeFlatTreesForMatt(TString sample="")
       tth_chain->Add("/scratch365/mdrnevic/trees/" + (TString) ent->d_name);
   }
   closedir (dir);
-  /*for (int i=0; i<7; i++) {
-    tth_chain->Add(input_files[i]);
-  }*/
 
   TString sorted_file_csv = output_dir + sample + "_Signal_DeepLearningTree.csv";
   TString bkgd_file_csv = output_dir + sample + "_Background_DeepLearningTree.csv";
-
-  run_it(tth_chain,output_file, sorted_file_csv, bkgd_file_csv, true, true);
-
+    
+  bool signal = true;
+  bool bkgd = true;
+  selection = false;
+  
+  run_it(tth_chain, output_file, sorted_file_csv, bkgd_file_csv, signal, bkgd, selection);
 }
