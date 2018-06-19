@@ -13,13 +13,17 @@ import glob
 import os
 import os.path as ospath
 
+def strToTuple(string):
+    return tuple(int(x) for x in string.split('/'))
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--background", help="Directory of background samples (will glob all files)")
 parser.add_argument("-s", "--signal", help="Directory of signal samples (will glob all files)")
 parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
 parser.add_argument("-x", "--exclude", action="store_true", help="Exclude the engineered variables")
 parser.add_argument("-t", "--test", action="store_true", help="Save testing sets separately as <file>_test.npy")
-parser.add_argument("--split", help="3-tuple of percents for the training, validation, testing split", type=tuple, default=(80, 10, 10))
+parser.add_argument("--split", help="3 numbers separated by '/' of percents for the training, validation, testing split",
+                    type=strToTuple, default=(80, 10, 10))
 args = parser.parse_args()
 
 if args.background:
