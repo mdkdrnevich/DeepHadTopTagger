@@ -19,6 +19,7 @@ parser.add_argument("-s", "--signal", help="Directory of signal samples (will gl
 parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
 parser.add_argument("-x", "--exclude", action="store_true", help="Exclude the engineered variables")
 parser.add_argument("-t", "--test", action="store_true", help="Save testing sets separately as <file>_test.npy")
+parser.add_argument("--split", help="3-tuple of percents for the training, validation, testing split", type=tuple, default=(80, 10, 10))
 args = parser.parse_args()
 
 if args.background:
@@ -80,12 +81,13 @@ print("Finished loading files. The smallest file after Top Mass cuts was {}".for
 # Save the Datasets as Training, Validation, and Testing Sets to Facilitate Easy Use in PyTorch and Scikit Learn
 # I ensure that there is an equal amount of each class in each set
 # Dataset Fractions:
-# - Training: 70%
-# - Validation: 15%
-# - Testing: 15%
+# - Training: 80%
+# - Validation: 10%
+# - Testing: 10%
 
-ix_train_cut = int(0.7*smallest)
-ix_val_cut = ix_train_cut + int(0.15*smallest)
+ix_train_cut = int(args.split[0]*smallest/100)
+ix_val_cut = ix_train_cut + int(args.split[1]*smallest/100)
+ix_test_cut = ix_val_cut + int(args.split[2]*smallest/100)
 
 sig_scale = len(bkgd_files)/len(signal_files) if len(signal_files) > len(bkgd_files) else 1
 bkgd_scale = len(signal_files)/len(bkgd_files) if len(bkgd_files) > len(signal_files) else 1
@@ -95,30 +97,30 @@ for ix, dset in enumerate(cut_signals):
     dset.shuffle()
     if args.test:
             name = ospath.splitext(signal_files[ix])[0] + "_test.npy"
-            dset.slice(ix_val_cut, smallest).saveas(name)
+            dset.slice(ix_val_cut, ix_test_cut).saveas(name)
     if ix == 0:
         total_train_signal = dset.slice(0, int(ix_train_cut * sig_scale))
         total_val_signal = dset.slice(int(ix_train_cut * sig_scale), int(ix_val_cut * sig_scale))
-        total_test_signal = dset.slice(int(ix_val_cut * sig_scale), int(smallest * sig_scale))
+        total_test_signal = dset.slice(int(ix_val_cut * sig_scale), int(ix_test_cut * sig_scale))
     else:
         total_train_signal = total_train_signal + dset.slice(0, int(ix_train_cut * sig_scale))
         total_val_signal = total_val_signal + dset.slice(int(ix_train_cut * sig_scale), int(ix_val_cut * sig_scale))
-        total_test_signal = total_test_signal + dset.slice(int(ix_val_cut * sig_scale), int(smallest * sig_scale))
+        total_test_signal = total_test_signal + dset.slice(int(ix_val_cut * sig_scale), int(ix_test_cut * sig_scale))
         
 for ix, dset in enumerate(cut_bkgds):
     dset.subsample(smallest)
     dset.shuffle()
     if args.test:
             name = ospath.splitext(bkgd_files[ix])[0] + "_test.npy"
-            dset.slice(ix_val_cut, smallest).saveas(name)
+            dset.slice(ix_val_cut, ix_test_cut).saveas(name)
     if ix == 0:
         total_train_bkgd = dset.slice(0, int(ix_train_cut * bkgd_scale))
         total_val_bkgd = dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
-        total_test_bkgd = dset.slice(int(ix_val_cut * bkgd_scale), int(smallest * bkgd_scale))
+        total_test_bkgd = dset.slice(int(ix_val_cut * bkgd_scale), int(ix_test_cut * bkgd_scale))
     else:
         total_train_bkgd = total_train_bkgd + dset.slice(0, int(ix_train_cut * bkgd_scale))
         total_val_bkgd = total_val_bkgd + dset.slice(int(ix_train_cut * bkgd_scale), int(ix_val_cut * bkgd_scale))
-        total_test_bkgd = total_test_bkgd + dset.slice(int(ix_val_cut * bkgd_scale), int(smallest * bkgd_scale))
+        total_test_bkgd = total_test_bkgd + dset.slice(int(ix_val_cut * bkgd_scale), int(ix_test_cut * bkgd_scale))
         
 print("Saving datasets")
 
