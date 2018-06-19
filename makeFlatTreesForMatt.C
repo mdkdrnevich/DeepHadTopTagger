@@ -262,7 +262,7 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
   cout << "Num Bkgd: " <<num_bkgd<< endl;
   cout << "Avg Bkgd: " <<avg_bkgd<< endl;
   
-  tripletree->Write();
+  tripletree.Write();
   outfile->Close();
   signal_sorted_file.close();
   bkgd_sorted_file.close();
@@ -289,7 +289,7 @@ void makeFlatTreesForMatt(TString sample="")
     
   bool signal = true;
   bool bkgd = true;
-  selection = false;
+  bool selection = false;
   
   run_it(tth_chain, output_file, sorted_file_csv, bkgd_file_csv, signal, bkgd, selection);
 }
