@@ -46,7 +46,7 @@ for m in xrange(dataset.shape[0]):
                 triplet = list(sorted(triplet, key=lambda x: x[5]+x[6]))
                 triplet = np.concatenate(triplet)
                 triplet = (triplet - mu)/sig
-                triplet = Variable(th.from_numpy(triplet)).view(1, -1).float()
+                triplet = Variable(th.from_numpy(triplet)).view(1, -1)
                 score = net(triplet).view(1).data.numpy().item()
                 if score > best_score:
                     best_score = score

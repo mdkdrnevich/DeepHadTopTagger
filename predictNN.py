@@ -43,7 +43,7 @@ for m in xrange(X.shape[0]):
     triplet = list(sorted(triplet, key=lambda x: x[5]+x[6]))
     triplet = np.concatenate(triplet)
     triplet = (triplet - mu)/sig
-    triplet = Variable(th.from_numpy(triplet)).view(1, -1)
+    triplet = Variable(th.from_numpy(triplet)).view(1, -1).float()
     score = net(triplet).view(1).data.numpy().item()
     print("{},{}".format(y_true[m], score), file=args.outfile)
 args.outfile.close()
