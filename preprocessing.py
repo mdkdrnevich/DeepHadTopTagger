@@ -20,9 +20,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--background", help="Directory of background samples (will glob all files)")
 parser.add_argument("-s", "--signal", help="Directory of signal samples (will glob all files)")
 parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
-parser.add_argument("-x", "--exclude", action="store_true", help="Exclude the engineered variables")
 parser.add_argument("-t", "--test", action="store_true", help="Save testing sets separately as <file>_test.npy")
-parser.add_argument("--split", help="3 numbers separated by '/' of percents for the training, validation, testing split",
+parser.add_argument("-v", "--vars", type=int, default=0, help="Integer for which set of variables to use:\n 0 - Basic vars\n 1 - Engineered vars\n 2 - All vars")
+parser.add_argument("--split", help="3 numbers separated by '/' of percents for the training/validation/testing split",
                     type=strToTuple, default=(80, 10, 10))
 args = parser.parse_args()
 
@@ -46,6 +46,22 @@ RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
 
 HEADER = RAW_HEADER + ["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
                                    "j2 ptD", "j3 ptD", "(b, j2) mass", "(b, j3) mass"]
+
+
+if args.vars == 0:
+    first_index = 0
+    last_index = len(RAW_HEADER) - 1
+    datatype = "basic"
+elif args.vars == 1:
+    first_index = len(RAW_HEADER) - 1
+    last_index = len(HEADER) - 1
+    datatype = "engineered"
+elif args.vars == 2:
+    first_index = 0
+    last_index = len(HEADER) - 1
+    datatype = "all"
+else:
+    raise ValueError("Invalid input for the -v, --vars option.")
 
 
 # Invariant Mass Cut
@@ -145,18 +161,12 @@ print("Saving datasets")
 if ix_train_cut > 0:
     train = total_train_signal + total_train_bkgd
     train.shuffle()
-    if not args.exclude:
-        train.saveas(args.name + "training_set.npy")
-    train.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "training_basic_set.npy")
+    train.slice(first_index, last_index, dim=1).saveas(args.name + "training_" + datatype + "_set.npy")
 if (ix_val_cut - ix_train_cut) > 0:
     val = total_val_signal + total_val_bkgd
     val.shuffle()
-    if not args.exclude:
-        val.saveas(args.name + "validation_set.npy")
-    val.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "validation_basic_set.npy")
+    val.slice(first_index, last_index, dim=1).saveas(args.name + "validation_" + datatype + "_set.npy")
 if (ix_test_cut - ix_val_cut) > 0:
     test = total_test_signal + total_test_bkgd
     test.shuffle()
-    if not args.exclude:
-        test.saveas(args.name + "testing_set.npy")
-    test.slice(0, len(RAW_HEADER)-1, dim=1).saveas(args.name + "testing_basic_set.npy")
+    test.slice(first_index, last_index, dim=1).saveas(args.name + "testing_" + datatype + "_set.npy")
