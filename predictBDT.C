@@ -1,4 +1,3 @@
-//Charlie Mueller 2/24/2016
 #include <iostream>
 #include <fstream>
 #include "TSystem.h"

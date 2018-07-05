@@ -1,4 +1,3 @@
-//Charlie Mueller 2/24/2016
 #include <iostream>
 #include <fstream>
 #include "TSystem.h"
@@ -49,7 +48,7 @@ struct pt_key
     }
 };
 
-void run_it(TChain* tree)
+void run_it(TChain* tree, TString sample)
 {
 
   //int num_hadronic = 0;
@@ -226,9 +225,14 @@ void run_it(TChain* tree)
       int size = preselected_jets_intree->size();
       bool matched1 = (matched_jets[0].size() == 3);
       bool matched2 = (matched_jets[1].size() == 3);
-      if ((!matched1 == !matched2) || ((num_pos_lept < 2) == (num_neg_lept < 2)) || !tau_lept)
+      if ((sample == "ttH") && ((!matched1 == !matched2) || ((num_pos_lept < 2) == (num_neg_lept < 2)) || !tau_lept))
         continue;
-      
+      else if ((sample == "ttW") && ((!matched1 == !matched2) || (num_pos_lept + num_neg_lept == 3)))
+        continue;
+      else if ((sample == "ttZ") && ((!matched1 == !matched2) || (num_pos_lept + num_neg_lept == 3)))
+        continue;
+      else if ((sample == "ttjets") && ((!matched1 == !matched2) || (num_pos_lept + num_neg_lept == 1)))
+        continue;
       passed_selection++;
           
       // Generate all combinations of indices via 3 for loops
@@ -328,7 +332,8 @@ void evaluateBDT(TString sample="")
       tth_chain->Add("/scratch365/mdrnevic/trees/testing/ttH/" + (TString) ent->d_name);
   }
   closedir (dir);
-
-  run_it(tth_chain);
+    
+  TString sample = "ttH";
+  run_it(tth_chain, sample);
 
 }
