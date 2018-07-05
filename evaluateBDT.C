@@ -322,7 +322,7 @@ void run_it(TChain* tree, TString sample)
   cout << "Accuracy: " << (float) correct / passed_selection << endl;
 }
 
-void evaluateBDT(TString sample="")
+void evaluateBDT()
 {  
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");    
   DIR *dir;

@@ -205,7 +205,7 @@ void run_it(TChain* tree, TString output_file, TString sample)
   outfile.close();
 }
 
-void makeTagTripletsSet(TString sample="")
+void makeTagTripletsSet()
 {
 
   TString output_dir = "";
