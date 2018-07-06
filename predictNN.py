@@ -35,15 +35,16 @@ X = data[:, 1:]
 params = np.load("{}_standardizer.npz".format(args.name))
 mu, sig = (params["mean"].astype("float32"), params["std"].astype("float32"))
 
-net = nn_classes.DeepBinClassifier(39, 6, 25).eval()
+net = nn_classes.DeepBinClassifier(39, 6, 25).eval().cuda()
 net.load_state_dict(th.load("{}_net.pth".format(args.name)))
 
 for m in xrange(X.shape[0]):
+    print("{:.2f}%\r".format(m*100/X.shape[0]), end="")
     triplet = [X[m, :JETSIZE], X[m, JETSIZE:2*JETSIZE], X[m, 2*JETSIZE:]]
     triplet = list(sorted(triplet, key=lambda x: x[5]+x[6]))
     triplet = np.concatenate(triplet)
     triplet = (triplet - mu)/sig
-    triplet = Variable(th.from_numpy(triplet)).view(1, -1).float()
-    score = net(triplet).view(1).data.numpy().item()
+    triplet = Variable(th.from_numpy(triplet)).view(1, -1).float().cuda()
+    score = net(triplet).cpu().view(1).data.numpy().item()
     print("{},{}".format(y_true[m], score), file=args.outfile)
 args.outfile.close()

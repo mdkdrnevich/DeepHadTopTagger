@@ -210,7 +210,7 @@ void makeTagTripletsSet()
 
   TString output_dir = "";
   
-  sample = "ttH";
+  TString sample = "ttH";
   TString output_file = output_dir + sample + "_triplets_bdt.csv";
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");    
   DIR *dir;
@@ -221,7 +221,5 @@ void makeTagTripletsSet()
   }
   closedir (dir);
 
-  TString sample = "ttH";
   run_it(tth_chain, output_file, sample);
-
 }

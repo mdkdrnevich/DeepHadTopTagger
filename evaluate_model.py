@@ -9,6 +9,12 @@ from sklearn.metrics import roc_curve, roc_auc_score, classification_report, con
 import utils
 import nn_classes
 import itertools
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("name", help="Name of the experiment you wish to use for prediction", type=str)
+parser.add_argument("datafile", help="Name of the file you wish to use for prediction", type=str)
+args = parser.parse_args()
 
 RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
     [[n.format(i) for n in 
@@ -17,16 +23,16 @@ RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
      for i in range(1, 17)]))
 JETSIZE = 13
 
-df = pd.read_csv("/afs/crc.nd.edu/user/m/mdrnevic/scratch/ttH_triplets_bdt.csv", names=RAW_HEADER, index_col=None)
+df = pd.read_csv(args.datafile, names=RAW_HEADER, index_col=None)
 dataset = df.as_matrix()
 for i in xrange(dataset.shape[0]):
     dataset[i, 0] = np.array([int(x) for x in dataset[i,0].split('.')])
 
-params = np.load("new_vars_standardizer.npz")
+params = np.load("{}_standardizer.npz".format(args.name))
 mu, sig = (params["mean"].astype("float32"), params["std"].astype("float32"))
 
-net = nn_classes.DeepBinClassifier(39, 4, 20).eval()
-net.load_state_dict(th.load("new_vars_net.pth"))
+net = nn_classes.DeepBinClassifier(39, 6, 25).eval().cuda()
+net.load_state_dict(th.load("{}_net.pth".format(args.name)))
 
 total = 0
 what_to_do = 0
@@ -46,8 +52,8 @@ for m in xrange(dataset.shape[0]):
                 triplet = list(sorted(triplet, key=lambda x: x[5]+x[6]))
                 triplet = np.concatenate(triplet)
                 triplet = (triplet - mu)/sig
-                triplet = Variable(th.from_numpy(triplet)).view(1, -1)
-                score = net(triplet).view(1).data.numpy().item()
+                triplet = Variable(th.from_numpy(triplet)).view(1, -1).cuda()
+                score = net(triplet).cpu().view(1).data.numpy().item()
                 if score > best_score:
                     best_score = score
                     best_triplet = (i,j,k)
