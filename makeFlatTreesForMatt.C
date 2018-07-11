@@ -64,11 +64,11 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, 
     }
     
   // Get three types of jets
-  ttH::Jet bjet = jet_triplet.back();
-  jet_triplet.pop_back();
+  ttH::Jet bjet = in_jets.back();
+  in_jets.pop_back();
   sort(in_jets.begin(), in_jets.end(), pt_key());
-  ttH::Jet wj1 = jet_triplet[0];
-  ttH::Jet wj2 = jet_triplet[1];
+  ttH::Jet wj1 = in_jets[0];
+  ttH::Jet wj2 = in_jets[1];
     
   // b-jet info
   in_file<< bjet.obj.pt() <<","<< bjet.obj.M() <<","<< (bjet.DeepCSVprobb + bjet.DeepCSVprobbb) <<",";
