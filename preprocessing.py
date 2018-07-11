@@ -44,8 +44,15 @@ RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
        "DeepCSVprobudsg {}", "qgid {}", "ptD {}", "axis1 {}", "mult {}"]]
      for i in range(1, 4)]))
 
-HEADER = RAW_HEADER + ["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
-                                   "j2 ptD", "j3 ptD", "(b, j2) mass", "(b, j3) mass"]
+HEADER = RAW_HEADER + list(itertools.chain.from_iterable(
+    [[n.format(x) for n in 
+      ["{} Pt", "{} Mass", "{} CSV", "{} CvsL", "{} CvsB", "{} ptD", "{} axis1", "{} mult"]]
+     for x in ['b', 'Wj1', 'Wj2']]))
+
+HEADER += ["b+Wj1 deltaR", "b+Wj1 Mass", "b+Wj2 deltaR", "b+Wj2 Mass", "W deltaR", "W Mass", "b+W deltaR", "Top Mass"]
+
+#["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
+#                                   "j2 ptD", "j3 ptD", "(b, j2) mass", "(b, j3) mass"]
 
 
 if args.vars == 0:

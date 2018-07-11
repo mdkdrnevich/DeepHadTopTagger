@@ -39,11 +39,73 @@ struct less_than_key
     }
 };
 
+struct pt_key
+{
+    inline bool operator() (const ttH::Jet& struct1, const ttH::Jet& struct2)
+    {
+        return (struct1.obj.pt() > struct2.obj.pt());
+    }
+};
+
 void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, int sig_or_bkgd)
 {
   in_file << sig_or_bkgd << ",";  
 
+  // Sort from low b-score to high b-score
   sort(in_jets.begin(), in_jets.end(), less_than_key());
+  // Write out basic information
+  for (const auto & jet : in_jets)
+    {
+      in_file<< jet.obj.pt() <<","<< jet.obj.eta() <<","<< jet.obj.phi() <<","<< jet.obj.M() <<",";
+      in_file<< jet.charge <<","<< jet.DeepCSVprobb <<","<< jet.DeepCSVprobbb <<",";
+      in_file<< jet.DeepCSVprobc <<","<< jet.DeepCSVprobudsg <<",";
+      in_file<< jet.qgid <<",";
+      in_file<< jet.ptD <<","<< jet.axis1 <<","<< jet.mult <<",";
+    }
+    
+  // Get three types of jets
+  ttH::Jet bjet = jet_triplet.back();
+  jet_triplet.pop_back();
+  sort(in_jets.begin(), in_jets.end(), pt_key());
+  ttH::Jet wj1 = jet_triplet[0];
+  ttH::Jet wj2 = jet_triplet[1];
+    
+  // b-jet info
+  in_file<< bjet.obj.pt() <<","<< bjet.obj.M() <<","<< (bjet.DeepCSVprobb + bjet.DeepCSVprobbb) <<",";
+  in_file<< (bjet.DeepCSVprobc/(bjet.DeepCSVprobc + bjet.DeepCSVprobudsg)) <<",";
+  in_file<< (bjet.DeepCSVprobc/(bjet.DeepCSVprobc + bjet.DeepCSVprobb + bjet.DeepCSVprobbb)) <<",";
+  in_file<< bjet.ptD <<","<< bjet.axis1 <<","<< bjet.mult <<",";
+  // high pT jet info
+  in_file<< wj1.obj.pt() <<","<< wj1.obj.M() <<","<< (wj1.DeepCSVprobb + wj1.DeepCSVprobbb) <<",";
+  in_file<< (wj1.DeepCSVprobc/(wj1.DeepCSVprobc + wj1.DeepCSVprobudsg)) <<",";
+  in_file<< (wj1.DeepCSVprobc/(wj1.DeepCSVprobc + wj1.DeepCSVprobb + wj1.DeepCSVprobbb)) <<",";
+  in_file<< wj1.ptD <<","<< wj1.axis1 <<","<< wj1.mult <<",";
+  // low pT jet info
+  in_file<< wj2.obj.pt() <<","<< wj2.obj.M() <<","<< (wj2.DeepCSVprobb + wj2.DeepCSVprobbb) <<",";
+  in_file<< (wj2.DeepCSVprobc/(wj2.DeepCSVprobc + wj2.DeepCSVprobudsg)) <<",";
+  in_file<< (wj2.DeepCSVprobc/(wj2.DeepCSVprobc + wj2.DeepCSVprobb + wj2.DeepCSVprobbb)) <<",";
+  in_file<< wj2.ptD <<","<< wj2.axis1 <<","<< wj2.mult <<",";
+    
+  // Engineered features
+  TLorentzVector *tvec1 = new TLorentzVector();
+  TLorentzVector *tvec2 = new TLorentzVector();
+  TLorentzVector *tvec3 = new TLorentzVector();
+  tvec1->SetPtEtaPhiM(bjet.obj.pt(), bjet.obj.eta(), bjet.obj.phi(), bjet.obj.M());
+  tvec2->SetPtEtaPhiM(wj1.obj.pt(), wj1.obj.eta(), wj1.obj.phi(), wj1.obj.M());
+  tvec3->SetPtEtaPhiM(wj2.obj.pt(), wj2.obj.eta(), wj2.obj.phi(), wj2.obj.M());
+  TLorentzVector W = *tvec2 + *tvec3;
+  TLorentzVector top = *tvec1 + *tvec2 + *tvec3;
+    
+  // Write engineered features
+  in_file<< deltaR(tvec1->Eta(), tvec1->Phi(), tvec2->Eta(), tvec2->Phi()) <<","<< (*tvec1 + *tvec2).M() <<",";
+  in_file<< deltaR(tvec1->Eta(), tvec1->Phi(), tvec3->Eta(), tvec3->Phi()) <<","<< (*tvec1 + *tvec3).M() <<",";
+  in_file<< deltaR(tvec2->Eta(), tvec2->Phi(), tvec3->Eta(), tvec3->Phi()) <<","<< W.M() <<",";
+  in_file<< deltaR(tvec1->Eta(), tvec1->Phi(), W.Eta(), W.Phi()) <<","<< top.M();
+    
+  in_file<<"\n";
+  in_file.flush();
+  
+  /* OLD ENGINEERED FEATURES
   TLorentzVector *tvec1 = new TLorentzVector();
   TLorentzVector *tvec2 = new TLorentzVector();
   TLorentzVector *tvec3 = new TLorentzVector();
@@ -65,20 +127,9 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, 
                   ((*tvec3).Px() + (*tvec3).Py() + (*tvec3).Pz());
   double b_q2_m = (*tvec1 + *tvec2).M();
   double b_q3_m = (*tvec1 + *tvec3).M();
-
-  for (const auto & jet : in_jets)
-    {
-      in_file<< jet.obj.pt() << "," << jet.obj.eta() <<","<< jet.obj.phi() <<","<< jet.obj.M() <<",";
-      in_file<< jet.charge <<","<< jet.DeepCSVprobb <<","<< jet.DeepCSVprobbb <<",";
-      in_file<< jet.DeepCSVprobc <<","<< jet.DeepCSVprobudsg <<",";
-      in_file<< jet.qgid <<",";
-      in_file<< jet.ptD <<","<< jet.axis1 <<","<< jet.mult <<",";
-    }
-  in_file<< top_mass <<","<< top.Pt() <<","<< top_ptDR <<","<< W_mass <<","<< W_ptDR <<","<< soft_drop;
-  in_file<< ","<< q2_ptd <<","<< q3_ptd <<","<< b_q2_m <<","<< b_q3_m;
   
-  in_file<<"\n";
-  in_file.flush();
+  in_file<< top_mass <<","<< top.Pt() <<","<< top_ptDR <<","<< W_mass <<","<< W_ptDR <<","<< soft_drop;
+  in_file<< ","<< q2_ptd <<","<< q3_ptd <<","<< b_q2_m <<","<< b_q3_m;*/
 }
 
 void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd_file, bool signal, bool background, bool selection)
