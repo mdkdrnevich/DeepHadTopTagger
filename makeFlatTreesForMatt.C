@@ -132,7 +132,7 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, 
   in_file<< ","<< q2_ptd <<","<< q3_ptd <<","<< b_q2_m <<","<< b_q3_m;*/
 }
 
-void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd_file, bool signal, bool background, bool selection)
+void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd_file, bool signal, bool background, bool selection, TString sample)
 {
 
   //int num_hadronic = 0;
@@ -251,7 +251,13 @@ void run_it(TChain* tree, TString output_file, TString sorted_file, TString bkgd
           // Make sure there's only one hadronic top
           bool matched1 = (matched_jets[0].size() == 3);
           bool matched2 = (matched_jets[1].size() == 3);
-          if ((!matched1 == !matched2) || ((num_pos_lept < 2) == (num_neg_lept < 2)) || !tau_lept)
+          if ((sample == "ttH") && ((!matched1 == !matched2) || ((num_pos_lept < 2) == (num_neg_lept < 2)) || !tau_lept))
+            continue;
+          else if ((sample == "ttW") && ((!matched1 == !matched2) || (num_pos_lept + num_neg_lept == 3)))
+            continue;
+          else if ((sample == "ttZ") && ((!matched1 == !matched2) || (num_pos_lept + num_neg_lept == 3)))
+            continue;
+          else if ((sample == "ttjets") && ((!matched1 == !matched2) || (num_pos_lept + num_neg_lept == 1)))
             continue;
       }
       
@@ -326,21 +332,30 @@ void makeFlatTreesForMatt(TString sample="")
   sample = "ttH";
   TString output_file = output_dir + sample + "_DeepLearningTree" + ".root";
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");
+  bool signal = true;
+  bool bkgd = false;
+  bool testing = false;
+    
+  TString datadir = "";
+  if (signal)
+      datadir = "/scratch365/mdrnevic/trees/" + sample + "/";
+  else if (bkgd)
+      datadir = "/scratch365/mdrnevic/trees/" + sample + "/for_bkgd/";
+  if (testing)
+      datadir = "/scratch365/mdrnevic/trees/testing/" + sample + "/";
     
   DIR *dir;
   struct dirent *ent;
-  dir = opendir ("/scratch365/mdrnevic/trees");
+  dir = opendir (datadir);
   while ((ent = readdir (dir)) != NULL) {
-      tth_chain->Add("/scratch365/mdrnevic/trees/" + (TString) ent->d_name);
+      tth_chain->Add(datadir + (TString) ent->d_name);
   }
   closedir (dir);
 
   TString sorted_file_csv = output_dir + sample + "_Signal_DeepLearningTree.csv";
   TString bkgd_file_csv = output_dir + sample + "_Background_DeepLearningTree.csv";
     
-  bool signal = true;
-  bool bkgd = true;
   bool selection = false;
   
-  run_it(tth_chain, output_file, sorted_file_csv, bkgd_file_csv, signal, bkgd, selection);
+  run_it(tth_chain, output_file, sorted_file_csv, bkgd_file_csv, signal, bkgd, selection, sample);
 }
