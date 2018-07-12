@@ -298,7 +298,7 @@ def plot_curves(curves, title='Loss Curves'):
     plt.plot(range(len(curves)), curves)
     ax.set_ylabel("BCE Loss")
     ax.set_xlabel("Epochs Finished")
-    ax.set_title("Loss Curves for Fine Tuning")
+    ax.set_title("{}".format(title))
     # Get the default colors
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     # Build legend entries
