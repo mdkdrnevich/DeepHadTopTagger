@@ -38,7 +38,7 @@ if args.vars == 0:
     data = data[:, :len(RAW_HEADER)]
     INPUTSIZE = len(RAW_HEADER) - 1
 elif args.vars == 1:
-    data = data[:, len(RAW_HEADER):len(HEADER)]
+    data = np.concatenate([data[:, 0].reshape((-1,1)), data[:, len(RAW_HEADER):len(HEADER)]], axis=1)
     INPUTSIZE = len(HEADER) - len(RAW_HEADER)
 
 y_true = data[:, 0]
@@ -53,7 +53,7 @@ net.load_state_dict(th.load("{}_net.pth".format(args.name)))
 
 for m in xrange(X.shape[0]):
     print("{:.2f}%\r".format(m*100/X.shape[0]), end="")
-    varX = Variable(th.from_numpy(X[m])).view(1, -1).float().cuda()
+    varX = Variable(th.from_numpy(X[m])).contiguous().view(1, -1).float().cuda()
     score = net(varX).cpu().view(1).data.numpy().item()
     print("{},{}".format(y_true[m], score), file=args.outfile)
 args.outfile.close()
