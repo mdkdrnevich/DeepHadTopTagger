@@ -53,8 +53,8 @@ class DeepBinClassifier(nn.Module):
     @staticmethod
     def init_kaiming(moduleList):
         for linear_layer in moduleList:
-            nn.init.kaiming_normal_(linear_layer.weight, a=0.25, nonlinearity='leaky_relu')
-            nn.init.constant_(linear_layer.bias, 0)
+            nn.init.kaiming_normal(linear_layer.weight, a=0.25)#, nonlinearity='leaky_relu') # Compatibility with v0.2.0
+            nn.init.constant(linear_layer.bias, 0) # Compatibility with v0.2.0
             
         
 class ShortDHTTNet(nn.Module):
