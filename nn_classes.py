@@ -2,6 +2,7 @@ from __future__ import print_function, division
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
+
 from torch.autograd import Variable
 import numpy as np
 import numpy.random as rand
@@ -35,6 +36,8 @@ class DeepBinClassifier(nn.Module):
             self.linear_layers.append(nn.Linear(input_dim*width, input_dim*width))
             self.activation_layers.append(nn.PReLU())
             self.norm_layers.append(nn.BatchNorm1d(input_dim*width))
+        # Initialize the weights for the linear layers in a special way
+        self.init_kaiming(self.linear_layers)
         # Output Layer
         self.output_layer = nn.Linear(input_dim*width, 1)
         # Dropout Layer
@@ -45,6 +48,13 @@ class DeepBinClassifier(nn.Module):
         for i in range(self.num_layers):
             x = self.dropout(self.norm_layers[i](self.activation_layers[i](self.linear_layers[i](x))))
         return F.sigmoid(self.output_layer(x))
+    
+    
+    @staticmethod
+    def init_kaiming(moduleList):
+        for linear_layer in moduleList:
+            nn.init.kaiming_normal_(linear_layer.weight, a=0.25, nonlinearity='leaky_relu')
+            nn.init.constant_(linear_layer.bias, 0)
             
         
 class ShortDHTTNet(nn.Module):
