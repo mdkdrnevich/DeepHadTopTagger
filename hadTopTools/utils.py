@@ -8,8 +8,6 @@ from torch.autograd import Variable
 import random
 from sklearn import preprocessing as skl_preprocessing
 from sklearn.metrics import roc_curve, roc_auc_score, classification_report, confusion_matrix, f1_score, precision_score, recall_score
-import matplotlib as mpl
-mpl.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import os.path as ospath

@@ -5,24 +5,16 @@
 # This file creates a feed-forward binary classification neural network for hadronic top reconstruction by classifying quark jet triplets as being from a top quark or not.
 
 from __future__ import print_function, division
-import pandas as pd
-import numpy as np
-from sklearn import preprocessing
 import torch as th
-from torch.autograd import Variable
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.utils.data import Dataset, DataLoader
-from sklearn.metrics import f1_score, roc_auc_score
-import matplotlib as mpl
-mpl.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from nn_classes import *
-import utils
+from torch.utils.data import DataLoader
 import argparse
+
+import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '{0}..{0}..{0}hadTopTools'.format(os.sep))
+import hadTopTools
 
 
 # Parse command line arguments
@@ -46,8 +38,8 @@ cuda = th.cuda.is_available()
 
 print("Loading Datasets")
 
-trainset = utils.CollisionDataset(args.training)
-valset = utils.CollisionDataset(args.validation, scaler=trainset.scaler)
+trainset = hadTopTools.CollisionDataset(args.training)
+valset = hadTopTools.CollisionDataset(args.validation, scaler=trainset.scaler)
 
 batch_size = args.batch_size
 trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=5)
@@ -62,7 +54,7 @@ input_dim = trainset.shape[1]
 
 # # Deep Neural Network on the Basic Features
 
-dnet = DeepBinClassifier(input_dim, args.layers, args.width, dropout=args.dropout)
+dnet = hadTopTools.nn.DeepBinClassifier(input_dim, args.layers, args.width, dropout=args.dropout)
 if cuda: dnet.cuda()
 
 criterion = nn.BCELoss()
@@ -83,17 +75,17 @@ def cost(model, X, y):
 
 print("Calculating Initial Loss")
 
-val_curve = [utils.test(dnet, cost, trainloader, validationloader, **training_params)]
+val_curve = [hadTopTools.test(dnet, cost, trainloader, validationloader, **training_params)]
 
 print("Training DNN")
 for epoch in range(1, args.epochs+1):
-    utils.train(dnet, cost, optimizer, trainloader, **training_params)
-    losses = utils.test(dnet, cost, trainloader, validationloader, **training_params)
+    hadTopTools.train(dnet, cost, optimizer, trainloader, **training_params)
+    losses = hadTopTools.test(dnet, cost, trainloader, validationloader, **training_params)
     val_curve.append(losses)
 print("Done")
 
 # Plot the training & validation curves for each epoch
-fig = utils.plot_curves(val_curve, title='Validation Curves')
+fig = hadTopTools.plot_curves(val_curve, title='Validation Curves')
 
 dnet.eval()
 dnet.cpu()
