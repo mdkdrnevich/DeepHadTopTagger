@@ -1,6 +1,7 @@
 from sklearn.ensemble import GradientBoostingClassifier
 import argparse
 import numpy as np
+import pickle
 
 parser = argparse.ArgumentParser()
 parser.add_argument("training", help="File path to the training set")
