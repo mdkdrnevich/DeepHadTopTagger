@@ -132,7 +132,7 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, 
   in_file<< ","<< q2_ptd <<","<< q3_ptd <<","<< b_q2_m <<","<< b_q3_m;*/
 }
 
-void run_it(TChain* full_tree, TString output_file, TString sorted_file)
+void run_it(TChain* full_tree, TString output_file, TString sorted_file_name)
 {
 
   //int num_hadronic = 0;
@@ -173,7 +173,7 @@ void run_it(TChain* full_tree, TString output_file, TString sorted_file)
   
   ofstream sorted_file;
 
-  sorted_file.open(sorted_file);
+  sorted_file.open(sorted_file_name);
 
   Int_t tree_class = 0;
   ttH::Jet tree_jet1;
@@ -253,5 +253,5 @@ void makeDataWithCuts(TString sample="")
 
   TString file_csv = output_dir + sample + "_TreeWithCuts.csv";
      
-  run_it(tth_chain, output_file, sorted_file_csv);
+  run_it(tth_chain, output_file, file_csv);
 }
