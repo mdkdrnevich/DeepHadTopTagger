@@ -185,6 +185,8 @@ void run_it(TChain* tree, TString output_file, TString sorted_file_name, TString
   tree->SetCacheLearnEntries(20); 
 
 
+  Int_t counter = 0;
+  Int_t b_counter = 0;
   double starttime = get_wall_time();
   //  treeentries = 1000000;
   for (int i=0; i<treeentries; i++)
@@ -193,14 +195,12 @@ void run_it(TChain* tree, TString output_file, TString sorted_file_name, TString
       tree->GetEntry(i);
       cout<< "Finished: " <<(i+1)*100/treeentries <<"%\r";
       
-     Int_t counter = 0;
-     Int_t b_counter = 0;
+     counter = 0;
+     b_counter = 0;
      for (const auto &pjet : *preselected_jets_intree) {
-         counter = 0;
-         b_counter = 0;
          if ((abs(pjet.obj.eta()) < 2.5) && (pjet.obj.Pt() > 25)) {
              counter += 1;
-             if (pjet.obj.DeepCSV > 0.2219) {
+             if (pjet.DeepCSV > 0.2219) {
                  b_counter += 1;
              }
          }
@@ -209,8 +209,8 @@ void run_it(TChain* tree, TString output_file, TString sorted_file_name, TString
          continue;
      }
       
+     counter = 0;
      for (const auto &lep : *leptons) {
-         counter = 0;
          if ((abs(lep.obj.eta()) < 2.4) && (lep.obj.Pt() > 35)) {
              counter += 1;
          }
@@ -273,5 +273,5 @@ void makeDataWithCuts(TString sample="")
 
   TString file_csv = output_dir + sample + "_TreeWithCuts.csv";
      
-  run_it(tth_chain, output_file, file_csv);
+  run_it(tth_chain, output_file, file_csv, selection);
 }
