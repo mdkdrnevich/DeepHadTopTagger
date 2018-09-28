@@ -116,8 +116,8 @@ ix_train_cut = int(args.split[0]*smallest/100)
 ix_val_cut = ix_train_cut + int(args.split[1]*smallest/100)
 ix_test_cut = ix_val_cut + int(args.split[2]*smallest/100)
 
-sig_scale = len(bkgd_files)/len(signal_files) if len(signal_files) > len(bkgd_files) else 1
-bkgd_scale = len(signal_files)/len(bkgd_files) if len(bkgd_files) > len(signal_files) else 1
+sig_scale = len(bkgd_files)/len(signal_files) if len(signal_files) > len(bkgd_files) > 0 else 1
+bkgd_scale = len(signal_files)/len(bkgd_files) if len(bkgd_files) > len(signal_files) > 0 else 1
 
 for ix, dset in enumerate(cut_signals):
     dset.subsample(smallest)
@@ -174,6 +174,11 @@ if (ix_val_cut - ix_train_cut) > 0:
     val.shuffle()
     val.slice(first_index, last_index, dim=1).saveas(args.name + "validation_" + datatype + "_set.npy")
 if (ix_test_cut - ix_val_cut) > 0:
-    test = total_test_signal + total_test_bkgd
+    if len(signal_files) > 0 and len(bkgd_files) > 0:
+        test = total_test_signal + total_test_bkgd
+    elif len(signal_files) > 0:
+        test = total_test_signal
+    elif len(bkgd_files) > 0:
+        test = total_test_bkgd
     test.shuffle()
     test.slice(first_index, last_index, dim=1).saveas(args.name + "testing_" + datatype + "_set.npy")

@@ -132,14 +132,10 @@ void write_csv(std::ofstream& in_file, vector<ttH::Jet> in_jets, int event_num, 
   in_file<< ","<< q2_ptd <<","<< q3_ptd <<","<< b_q2_m <<","<< b_q3_m;*/
 }
 
-void run_it(TChain* full_tree, TString output_file, TString sorted_file_name)
+void run_it(TChain* tree, TString output_file, TString sorted_file_name, TString sample)
 {
 
   //int num_hadronic = 0;
-  TString cuts = "(preselected_leptons.obj.Pt() > 35) && (@preselected_leptons.size() == 1) && (@preselected_jets.size() >= 4) ";
-  cuts += " && (abs(preselected_leptons.obj.eta()) < 2.4) && (abs(preselected_jets.obj.eta()) < 2.5) ";
-  cuts += " && (preselected_jets.obj.Pt() > 25) && (preselected_jets.obj.DeepCSV > 0.2219)";
-  TTree *tree = full_tree->CopyTree(cuts);
   int treeentries = tree->GetEntries();   
   cout << "# events in tree: "<< treeentries << endl;  
 
@@ -196,8 +192,34 @@ void run_it(TChain* full_tree, TString output_file, TString sorted_file_name)
       //printProgress(i,treeentries);
       tree->GetEntry(i);
       cout<< "Finished: " <<(i+1)*100/treeentries <<"%\r";
+      
+     Int_t counter = 0;
+     Int_t b_counter = 0;
+     for (const auto &pjet : *preselected_jets_intree) {
+         counter = 0;
+         b_counter = 0;
+         if ((abs(pjet.obj.eta()) < 2.5) && (pjet.obj.Pt() > 25)) {
+             counter += 1;
+             if (pjet.obj.DeepCSV > 0.2219) {
+                 b_counter += 1;
+             }
+         }
+     }
+     if ((counter < 4) || (b_counter < 1)) {
+         continue;
+     }
+      
+     for (const auto &lep : *leptons) {
+         counter = 0;
+         if ((abs(lep.obj.eta()) < 2.4) && (lep.obj.Pt() > 35)) {
+             counter += 1;
+         }
+     }
+     if (counter != 1) {
+         continue;
+     }
 
-      int size = preselected_jets_intree->size();
+     int size = preselected_jets_intree->size();
       //write csv files
      tree_class = 0;
      // Generate all combinations of indices via 3 for loops
@@ -233,12 +255,10 @@ void makeDataWithCuts(TString sample="")
 {
 
   TString output_dir = "";
-  sample = "ttH";
+  sample = "electron";
+  TString selection = "electron";
   TString output_file = output_dir + sample + "_DeepLearningTree" + ".root";
   TChain *tth_chain = new TChain("OSTwoLepAna/summaryTree");
-  bool signal = true;
-  bool bkgd = false;
-  bool testing = false;
     
   TString datadir = "";
   datadir = "/scratch365/mdrnevic/trees/" + sample + "/";
