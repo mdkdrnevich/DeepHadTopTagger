@@ -187,6 +187,13 @@ void run_it(TChain* tree, TString output_file, TString sorted_file_name, TString
 
   Int_t counter = 0;
   Int_t b_counter = 0;
+  Int_t id_num = 0;
+  if (sample == "muon") {
+      id_num = 13;
+  } else if (sample == "electron") {
+      id_num = 11;
+  }
+      
   double starttime = get_wall_time();
   //  treeentries = 1000000;
   for (int i=0; i<treeentries; i++)
@@ -211,7 +218,7 @@ void run_it(TChain* tree, TString output_file, TString sorted_file_name, TString
       
      counter = 0;
      for (const auto &lep : *leptons) {
-         if ((abs(lep.obj.eta()) < 2.4) && (lep.obj.Pt() > 35)) {
+         if ((abs(lep.obj.eta()) < 2.4) && (lep.obj.Pt() > 35) && (lep.pdgID == id_num)) {
              counter += 1;
          }
      }
@@ -231,12 +238,15 @@ void run_it(TChain* tree, TString output_file, TString sorted_file_name, TString
            vector<int> comb = {i, j, k};
            vector<ttH::Jet> bkgd_jets;
            for (const auto& index : comb)
+             if ((abs((*preselected_jets_intree)[index].obj.eta()) >= 2.5) || ((*preselected_jets_intree)[index].obj.Pt() <= 25))
+                 goto skip;
              bkgd_jets.push_back((*preselected_jets_intree)[index]);
            write_csv(sorted_file, bkgd_jets, eventnum_intree, 0);
            tree_jet1 = bkgd_jets[0];
            tree_jet2 = bkgd_jets[1];
            tree_jet3 = bkgd_jets[2];
            tripletree.Fill();
+           skip:; // Here is where our goto statement goes to skip using jets/leptons that don't pass selection
          }
        }
      }
