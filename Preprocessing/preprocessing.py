@@ -7,11 +7,14 @@ import numpy as np
 import itertools
 import pickle
 from random import sample
-import utils
 import argparse
 import glob
 import os
 import os.path as ospath
+
+import sys, os
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '{0}..{0}hadTopTools'.format(os.sep))
+import hadTopTools
 
 def strToTuple(string):
     return tuple(int(x) for x in string.split('/'))
@@ -100,7 +103,7 @@ for dfile in signal_files:
     # Now select the specific variables for this dataset
     cut_data = cut_data[DATA_HEADER]
     # Turn this into a 'Dataset'
-    cut_dset = utils.CollisionDataset(cut_data.as_matrix())
+    cut_dset = hadTopTools.CollisionDataset(cut_data.as_matrix())
     
     data_size = cut_data.shape[0]
     smallest = min([smallest, data_size]) if smallest > 0 else data_size
@@ -116,7 +119,7 @@ for dfile in bkgd_files:
     # Now select the specific variables for this dataset
     cut_data = cut_data[DATA_HEADER]
     # Turn this into a 'Dataset'
-    cut_dset = utils.CollisionDataset(cut_data.as_matrix())
+    cut_dset = hadTopTools.CollisionDataset(cut_data.as_matrix())
     
     data_size = cut_data.shape[0]
     smallest = min([smallest, data_size]) if smallest > 0 else data_size
