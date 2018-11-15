@@ -21,7 +21,7 @@ parser.add_argument("-b", "--background", help="Directory of background samples 
 parser.add_argument("-s", "--signal", help="Directory of signal samples (will glob all files)")
 parser.add_argument("-n", "--name", help="Name of the sample that you want added to the saved datafile names", default="")
 parser.add_argument("-t", "--test", action="store_true", help="Save testing sets separately as <file>_test.npy")
-parser.add_argument("-v", "--vars", type=int, default=0, help="Integer for which set of variables to use:\n 0 - Basic vars\n 1 - Engineered vars\n 2 - All vars")
+parser.add_argument("-v", "--vars", type=int, default=0, help="Integer for which set of variables to use:\n 0 - Old basic vars\n 1 - Old basic vars + BDT basic vars\n 2 - Engineered vars\n 3 - All vars")
 parser.add_argument("--split", help="3 numbers separated by '/' of percents for the training/validation/testing split",
                     type=strToTuple, default=(80, 10, 10))
 args = parser.parse_args()
@@ -44,28 +44,42 @@ RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
        "DeepCSVprobudsg {}", "qgid {}", "ptD {}", "axis1 {}", "mult {}"]]
      for i in range(1, 4)]))
 
-HEADER = RAW_HEADER + list(itertools.chain.from_iterable(
+OLD_RAW_HEADER = ["Class"] + list(itertools.chain.from_iterable(
+    [[n.format(i) for n in 
+      ["Pt {}", "Eta {}", "Phi {}", "Mass {}", "Charge {}", "DeepCSVprobb {}", "DeepCSVprobbb {}", "DeepCSVprobc {}",
+       "DeepCSVprobudsg {}", "qgid {}"]]
+     for i in range(1, 4)]))
+
+ENG_HEADER = list(itertools.chain.from_iterable(
     [[n.format(x) for n in 
       ["{} Pt", "{} Mass", "{} CSV", "{} CvsL", "{} CvsB", "{} ptD", "{} axis1", "{} mult"]]
-     for x in ['b', 'Wj1', 'Wj2']]))
+     for x in ['b', 'Wj1', 'Wj2']])) + ["b+Wj1 deltaR", "b+Wj1 Mass", "b+Wj2 deltaR",
+                                        "b+Wj2 Mass", "W deltaR", "W Mass", "b+W deltaR", "Top Mass"]
 
-HEADER += ["b+Wj1 deltaR", "b+Wj1 Mass", "b+Wj2 deltaR", "b+Wj2 Mass", "W deltaR", "W Mass", "b+W deltaR", "Top Mass"]
+HEADER = RAW_HEADER + ENG_HEADER
 
 #["Top Mass", "Top Pt", "Top ptDR", "W Mass", "W ptDR", "soft drop n2",
 #                                   "j2 ptD", "j3 ptD", "(b, j2) mass", "(b, j3) mass"]
 
-
 if args.vars == 0:
-    first_index = 0
-    last_index = len(RAW_HEADER) - 1
-    datatype = "basic"
+    #first_index = 0
+    #last_index = len(OLD_RAW_HEADER) - 1
+    DATA_HEADER = OLD_RAW_HEADER
+    datatype = "old_basic"
 elif args.vars == 1:
-    first_index = len(RAW_HEADER) - 1
-    last_index = len(HEADER) - 1
-    datatype = "engineered"
+    #first_index = 0
+    #last_index = len(RAW_HEADER) - 1
+    DATA_HEADER = RAW_HEADER
+    datatype = "basic"
 elif args.vars == 2:
-    first_index = 0
-    last_index = len(HEADER) - 1
+    #first_index = len(RAW_HEADER) - 1
+    #last_index = len(HEADER) - 1
+    DATA_HEADER = ENG_HEADER
+    datatype = "engineered"
+elif args.vars == 3:
+    #first_index = 0
+    #last_index = len(HEADER) - 1
+    DATA_HEADER = HEADER
     datatype = "all"
 else:
     raise ValueError("Invalid input for the -v, --vars option.")
@@ -81,8 +95,11 @@ for dfile in signal_files:
     print("Loading File: {}".format(dfile))
     data = pd.read_csv(dfile, header=None, names=HEADER)
 
-    # Make cuts at 96 & 266 GeV
+    # Make cuts at 96 & 266 GeV first
     cut_data = data[((data["Top Mass"] > 96) & (data["Top Mass"] < 266))]
+    # Now select the specific variables for this dataset
+    cut_data = cut_data[DATA_HEADER]
+    # Turn this into a 'Dataset'
     cut_dset = utils.CollisionDataset(cut_data.as_matrix())
     
     data_size = cut_data.shape[0]
@@ -94,8 +111,11 @@ for dfile in bkgd_files:
     print("Loading File: {}".format(dfile))
     data = pd.read_csv(dfile, header=None, names=HEADER)
 
-    # Make cuts at 96 & 266 GeV
+    # Make cuts at 96 & 266 GeV first
     cut_data = data[((data["Top Mass"] > 96) & (data["Top Mass"] < 266))]
+    # Now select the specific variables for this dataset
+    cut_data = cut_data[DATA_HEADER]
+    # Turn this into a 'Dataset'
     cut_dset = utils.CollisionDataset(cut_data.as_matrix())
     
     data_size = cut_data.shape[0]
@@ -168,11 +188,13 @@ print("Saving datasets")
 if ix_train_cut > 0:
     train = total_train_signal + total_train_bkgd
     train.shuffle()
-    train.slice(first_index, last_index, dim=1).saveas(args.name + "training_" + datatype + "_set.npy")
+    #train.slice(first_index, last_index, dim=1).saveas(args.name + "training_" + datatype + "_set.npy")
+    train.saveas(args.name + "training_" + datatype + "_set.npy")
 if (ix_val_cut - ix_train_cut) > 0:
     val = total_val_signal + total_val_bkgd
     val.shuffle()
-    val.slice(first_index, last_index, dim=1).saveas(args.name + "validation_" + datatype + "_set.npy")
+    #val.slice(first_index, last_index, dim=1).saveas(args.name + "validation_" + datatype + "_set.npy")
+    val.saveas(args.name + "validation_" + datatype + "_set.npy")
 if (ix_test_cut - ix_val_cut) > 0:
     if len(signal_files) > 0 and len(bkgd_files) > 0:
         test = total_test_signal + total_test_bkgd
@@ -181,4 +203,5 @@ if (ix_test_cut - ix_val_cut) > 0:
     elif len(bkgd_files) > 0:
         test = total_test_bkgd
     test.shuffle()
-    test.slice(first_index, last_index, dim=1).saveas(args.name + "testing_" + datatype + "_set.npy")
+    #test.slice(first_index, last_index, dim=1).saveas(args.name + "testing_" + datatype + "_set.npy")
+    test.saveas(args.name + "testing_" + datatype + "_set.npy")
