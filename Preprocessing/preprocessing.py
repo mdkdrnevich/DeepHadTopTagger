@@ -13,7 +13,7 @@ import os
 import os.path as ospath
 
 import sys, os
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '{0}..{0}hadTopTools'.format(os.sep))
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '{0}..{0}'.format(os.sep))
 import hadTopTools
 
 def strToTuple(string):
@@ -77,7 +77,7 @@ elif args.vars == 1:
 elif args.vars == 2:
     #first_index = len(RAW_HEADER) - 1
     #last_index = len(HEADER) - 1
-    DATA_HEADER = ENG_HEADER
+    DATA_HEADER = ["Class"] + ENG_HEADER
     datatype = "engineered"
 elif args.vars == 3:
     #first_index = 0

@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 import argparse
 
 import sys, os
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '{0}..{0}..{0}hadTopTools'.format(os.sep))
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + '{0}..{0}..{0}'.format(os.sep))
 import hadTopTools
 
 
