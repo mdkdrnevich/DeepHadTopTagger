@@ -1,4 +1,6 @@
 from __future__ import division
+import sys
+sys.path.insert(0, "/afs/crc.nd.edu/user/m/mdrnevic/Private/DeepHadTopTagger")
 import pickle
 import numpy as np
 import pandas as pd
@@ -6,11 +8,10 @@ import torch as th
 from matplotlib import pyplot as plt
 from torch.autograd import Variable
 from sklearn.metrics import roc_curve, roc_auc_score, classification_report, confusion_matrix, f1_score
-import utils
-import nn_classes
 import itertools
 import argparse
 import math
+import hadTopTools as htt
 
 parser = argparse.ArgumentParser()
 parser.add_argument("name", help="Name of the experiment you wish to use for prediction", type=str)
@@ -33,21 +34,21 @@ dataset = df.as_matrix()
 for i in xrange(dataset.shape[0]):
     dataset[i, 0] = np.array([int(x) for x in dataset[i,0].split('.')])
 
-params = np.load("{}_standardizer.npz".format(args.name))
+params = np.load("../../{}_standardizer.npz".format(args.name))
 mu, sig = (params["mean"].astype("float32"), params["std"].astype("float32"))
 
 if args.vars == 0:
-    net = nn_classes.DeepBinClassifier(30, 6, 25).eval().cuda()
+    net = htt.nn.DeepBinClassifier(30, 6, 25).eval().cuda()
 elif args.vars == 1:
-    net = nn_classes.DeepBinClassifier(39, 6, 25).eval().cuda()
+    net = htt.nn.DeepBinClassifier(39, 6, 25).eval().cuda()
 elif args.vars == 2:
-    net = nn_classes.DeepBinClassifier(32, 6, 25).eval().cuda()
+    net = htt.nn.DeepBinClassifier(32, 6, 25).eval().cuda()
 elif args.vars == 3:
-    net = nn_classes.DeepBinClassifier(71, 6, 25).eval().cuda()
+    net = htt.nn.DeepBinClassifier(71, 6, 25).eval().cuda()
 else:
     raise ValueError("Invalid input for the -v, --vars option.")
     
-net.load_state_dict(th.load("{}_net.pth".format(args.name)))
+net.load_state_dict(th.load("../../{}_net.pth".format(args.name)))
 
 total = 0
 what_to_do = 0
@@ -104,17 +105,17 @@ for m in xrange(dataset.shape[0]):
                     temp = abs(tvec1.Phi()-tvec3.Phi())
                     temp = temp if temp <= math.pi else temp - 2*math.pi
                     b_wj2_deltaR = np.sqrt((tvec1.Eta()-tvec3.Eta())**2 + temp**2)
-                    b_wj2_mass =(*tvec1 + *tvec3).M();
+                    b_wj2_mass =(tvec1 + tvec3).M()
                     
                     temp = abs(tvec2.Phi()-tvec3.Phi())
                     temp = temp if temp <= math.pi else temp - 2*math.pi
                     w_deltaR = np.sqrt((tvec2.Eta()-tvec3.Eta())**2 + temp**2)
-                    w_mass = W.M();
+                    w_mass = W.M()
                     
                     temp = abs(tvec1.Phi()-W.Phi())
                     temp = temp if temp <= math.pi else temp - 2*math.pi
                     b_w_deltaR = np.sqrt((tvec1.Eta()-W.Eta())**2 + temp**2)
-                    top_mass = top.M();
+                    top_mass = top.M()
                     
                     eng_vars[3] = np.array([b_wj1_deltaR, b_wj1_mass, b_wj2_deltaR, b_wj2_mass, w_deltaR, w_mass, b_w_deltaR, top_mass])
                     if args.vars == 2:
