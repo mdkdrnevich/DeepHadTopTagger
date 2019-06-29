@@ -25,7 +25,4 @@ We have achieved a 7.44% relative improvement in accuracy (defined in the result
   - View `model_analysis.ipynb` for help here.
   
 ## Results
-
-### Model
-
-### Statistics
+These are described in `Drnevich_Physics_Thesis.pdf`.
