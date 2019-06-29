@@ -1,5 +1,5 @@
 # DeepHadTopTagger
-**Deep neural network research for tagging triplets of jets from hadronic top decay for the CMS experiment at CERN.**
+**Deep neural network research for tagging triplets of jets from hadronic top decay for the CMS experiment at CERN. This research culminated in my undergraduate senior thesis at the University of Notre Dame.**
 
 ----
 ## Overview
